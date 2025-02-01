@@ -1,5 +1,5 @@
 -- Chapter 10 - Projects
--- Final Capstone Project 1: Store Management System in MS SQL Server
+-- Final Capstone Project 1: Store Management System in Postgres SQL Server
 
 -- Assignment Tasks:
 -- Stored Procedure Tasks:
