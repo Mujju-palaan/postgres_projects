@@ -1,3 +1,4 @@
+
 --select * from city;
 ------------------------get scrop---------------------------------
 create or replace procedure scrop_get_city_data(
