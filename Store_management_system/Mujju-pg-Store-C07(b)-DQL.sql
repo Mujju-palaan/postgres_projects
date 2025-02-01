@@ -179,5 +179,4 @@ group by store_name
 order by stock desc;
 
 --GOOD LUCK WITH YOUR ASSIGNMENT!!!
---Don't forget to contact us if you need any further assistance with your assignments, and most importantly, for a manual review and approval of your work.
 
