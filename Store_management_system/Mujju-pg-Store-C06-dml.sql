@@ -480,8 +480,7 @@ values(202501, '2025-01-01', 2024, 6, 22, 6, 'Sunday', 52, 'false', 'true', 'fal
 --select * from date_dim;
 
 --GOOD LUCK WITH YOUR ASSIGNMENT!!!
---Don't forget to contact us if you need any further assistance with your assignments, and most importantly, 
---for a manual review and approval of your work.
+
 
 
 
