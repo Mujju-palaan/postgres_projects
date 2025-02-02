@@ -31,6 +31,25 @@ $$;
 
 --call scrop_get_product_details(1);
 
+create or replace function FUN_get_product_details(iparam_product_id int)
+returns table(
+	iparam_product_name varchar,
+	iparam_price numeric,
+	iparam_quantity_in_stock varchar
+)
+as $$
+BEGIN
+	RETURN QUERY
+	select product_name, price, quantity_in_stock 
+	from product
+	where product_id = iparam_product_id;
+	
+END;
+$$ language plpgsql;
+
+--select * from FUN_get_product_details(1);
+
+
 ---------------------------------------------------------------------------------------------------------------------------------------
 -- 2)Stored Procedure for Customer Management
 -- Create a stored procedure to insert customer information for the Customer Management screen.
@@ -143,21 +162,38 @@ $$;
 );
 
 
-
 ---------------------------------------------------------------------------------------------------------------------------------------
 -- 5)Stored Procedure for Payment Insertion
 -- Write a stored procedure to insert new payment information for an order in the Payment Management screen. 
---Alos update order sattus as piad in order table.
+--Also update order status as piad in order table.
+select * from payment;
+select * from orders;
 
+create or replace procedure scrop_payment_Insertion(
+	IN iparam_payment_date date,
+	IN iparam_amount_paid numeric,
+	IN iparam_order_id int
+)
+language plpgsql
+as $$
+BEGIN
+	----inert into payment
+	insert into payment(payment_date, amount_paid, order_id )
+	values(iparam_payment_date, iparam_amount_paid, iparam_order_id);
 
+	----update order_status
+	update orders set order_status = 'Paid'
+	where order_id = iparam_order_id;
 
+END;
+$$;
 
-
-
+call scrop_payment_Insertion('2025-02-02', 50, 3);
 
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 -- 6)Stored Procedure for Customer Analysis
+
 -- Develop a stored procedure to analyze customer revenue. This procedure should generate a report 
 --displaying the month name, customer name, the number of orders for each specified month, 
 --and the total revenue for that month. The output must include all months of the current year, 
@@ -172,6 +208,8 @@ $$;
 
 
 
+
+-----------------------------------------------------------------------------------------------------------------------
 -- 7) Stored Procedure for Analyzing Sales by Store
 -- Create a stored procedure to analyze store sales performance. The procedure should display the 
 --store name, location, total sales, the number of transactions, and the average transaction value for a given date range. 
@@ -262,23 +300,53 @@ create or replace view view_weekend_sales AS
 -- 1) Function to Calculate Total Orders for Customer
 --Write a function that calculates the total number of orders placed by a specific customer.
 
+create or replace function fun_total_orders(iparam_customer_id INT	)
+	returns int
+as $$
 
+DECLARE total_orders int;
 
+BEGIN
+	select count(*) 
+	into total_orders
+	from orders
+	where customer_id = iparam_customer_id;
 
+	return total_orders;
+END;
+$$ language plpgsql;
 
-
+--select * from fun_total_orders(1);
 
 
 
 -- 2) Function to Get Available Discounts
 --Write a function that retrieves active discount codes based on current date.
+--select * from Discount
 
+create or replace function fun_get_discount(iparam_date date)
+	returns varchar
+as $$
 
+DECLARE available_discount varchar;
 
+BEGIN 
+	select discount_code 
+	into available_discount
+	from Discount
+	where (SELECT DATE(created_at)) =  iparam_date;
 
+	return available_discount;
+END;
+$$
+language plpgsql;
+-----WHY isn't it showing all the discount_codes
 
+--select fun_get_discount('2025-01-18')
 
-
+--select discount_code 
+	from Discount
+	where (SELECT DATE(created_at)) =  '2025-01-18';
 
 
 --------------------------------------------------------------------------------------------------------------------------------------
