@@ -65,7 +65,7 @@ $$;
 -- 3)Stored Procedure for Product Management
 -- Create a stored procedure to update product information for the Product Management screen.
 --select * from product;
-
+	
 create or replace procedure scrop_dml_update_product(
 	IN iparam_product_id int,
 	IN iparam_product_price numeric(10,2)
@@ -86,10 +86,61 @@ $$;
 -- 4)Stored Procedure for Order Management
 -- Write a stored procedure to create a new order. This procedure should insert data into 
 -- the ORDER and ORDER_PRODUCT tables while updating the INVENTORY table to deduct the available stock accordingly.
-select * from orders;
-select * from order_product;
+-- select * from orders;
+-- select * from order_product;
+-- select * from inventory;
 
+-- drop procedure if exists scrop_insert_order_update_inventory;
 
+create or replace procedure scrop_insert_order_orderProduct_update_inventoryStock(
+	IN iparam_order_date date,
+	IN iparam_total_amount numeric,  -----units*price
+	IN iparam_delivered_duration time,
+	IN iparam_customer_id int,
+	IN iparam_store_id int,
+	IN iparam_order_status varchar, ---( Delivered,Paid,Shipping,Closed,Ready for Delivery,Accepted,Packing)
+	IN iparam_order_id int,
+	IN iparam_product_id int,	
+	IN iparam_units	int,			---kitte units
+	IN iparam_unit_rate numeric 	--- price of unit
+)
+language plpgsql
+as $$
+
+BEGIN
+	---- insert data into orders
+	insert into orders(order_date, total_amount, delivered_duration, customer_id, store_id, order_status)
+	values
+	(iparam_order_date, iparam_total_amount, iparam_delivered_duration, iparam_customer_id, iparam_store_id, iparam_order_status);
+
+	----insert data into order_product
+	insert into order_product(order_id, product_id, units, unit_rate, total_amount)
+	values
+	(iparam_order_id, iparam_product_id,iparam_units, iparam_unit_rate, iparam_total_amount);
+
+	----updating the INVENTORY table to deduct the available stock accordingly.
+	update INVENTORY set quantity_in_stock = quantity_in_stock - iparam_units
+	where product_id = iparam_product_id;
+	
+END;
+$$;
+
+----My problem is inserting without hard coding,
+----How to insert new order_id in order_product which is already present in scrop?
+----insted of hard coding total_amount, it should automatic calculate (Units*price)
+
+--CALL public.scrop_insert_order_orderproduct_update_inventorystock(
+	'2025-02-02',	--<IN iparam_order_date date>,
+	125,			--<IN iparam_total_amount  numeric>,
+	'16:00:00',		--<IN iparam_delivered_duration  time without time zone>,
+	1,				--<IN iparam_customer_id  integer>,
+	1,				--<IN iparam_store_id  integer>,
+	'Delivered',	--<IN iparam_order_status  character varying>,
+	5,				--<IN iparam_order_id  integer>,
+	1,				--<IN iparam_product_id  integer>,
+	5,				--<IN iparam_units  integer>,
+	25				--<IN iparam_unit_rate  numeric>
+);
 
 
 
@@ -97,6 +148,8 @@ select * from order_product;
 -- 5)Stored Procedure for Payment Insertion
 -- Write a stored procedure to insert new payment information for an order in the Payment Management screen. 
 --Alos update order sattus as piad in order table.
+
+
 
 
 
@@ -117,6 +170,8 @@ select * from order_product;
 
 
 
+
+
 -- 7) Stored Procedure for Analyzing Sales by Store
 -- Create a stored procedure to analyze store sales performance. The procedure should display the 
 --store name, location, total sales, the number of transactions, and the average transaction value for a given date range. 
@@ -124,6 +179,127 @@ select * from order_product;
 --Use a temporary table to store intermediate calculations for efficient data processing and join data from relevant 
 --tables such as stores, sales, and transactions.
 
+---------------------------------------------------------------------------------------------------------------------------------
+
+--View Tasks:
+-- 1) View for Store Details
+--Create a view to display store details.
+
+create view view_store_details as
+	select store_name, location, b.city_name, b.country_name, a.phone_number, a.quantity_in_stock
+	from store a
+	inner join city b using(city_id);
+
+--select * from view_store_details;
+
+-- 2) View for Order Details
+-- Design a view to display order details, including the customer name, order date, and total amount,
+-- for the Order Overview screen. Additionally, include a column that lists all purchased products in a single column,
+-- separated by commas (e.g., Milk, Soda, Lays).
+-- select * from order_product;
+-- select * from product;
+-- select * from orders;
+
+create or replace view view_order_details as 
+	select a.first_name||' '||a.last_name as customer_name,
+			b.order_date, 
+			b.total_amount,
+			count(c.order_product_id),
+			d.product_name		
+	from customer a
+	inner join orders b using(customer_id)
+	inner join order_product c using(order_id)
+	inner join product d using(product_id)
+	group by a.first_name||' '||a.last_name,
+			b.order_date, b.total_amount, d.product_name,order_product_id
+;
+--select * from view_order_details;
+
+
+-- 3) View for Inventory Overview
+--Write a view to display the available inventory at each store, showing product name, store name, and quantity in stock.
+	
+create view view_inventory_overview AS	
+	select c.product_name, a.store_name, b.quantity_in_stock
+	from  store a
+	inner join inventory b ON a.store_id=b.store_id
+	inner join product c ON b.product_id = c.product_id
+	;
+
+select * from view_inventory_overview;
+
+
+-- 4) View for Weekend Sales
+--Create a view to showcase weekend sales analysis, highlighting the top ten products sold during the 
+--weekend along with details such as revenue, location, product name, and product category.
+
+create or replace view view_weekend_sales AS
+	select a.store_name,
+	a.location,
+	b.product_name,
+	b.category,
+	sum(units * unit_rate) as revenue,
+	RANK() OVER (order by sum(units * unit_rate)) as rank,
+	d.order_date
+	from store a
+	inner join inventory aa using(store_id)
+	inner join product b using(product_id)
+	inner join order_product c ON b.product_id=c.product_id
+	inner join orders d using(order_id)
+	where extract(DOW FROM order_date) in (0, 6) ---day of week (sun,mon,tue -----..nth day)
+	group by a.store_name, a.location, b.product_name, b.category,order_date
+	limit 10
+;
+
+--select extract(week from cast(order_date as date)) from orders;
+
+--select order_date,EXTRACT(DOW FROM order_date) in (0,6) from orders;  ---day of week (sun,mon,tue -----..nth day)
+
+
+
+---------------------------------------------------------------------------------------------------------------------------------------
+--Function Tasks:
+-- 1) Function to Calculate Total Orders for Customer
+--Write a function that calculates the total number of orders placed by a specific customer.
+
+
+
+
+
+
+
+
+
+-- 2) Function to Get Available Discounts
+--Write a function that retrieves active discount codes based on current date.
+
+
+
+
+
+
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------------
+--Trigger Task:
+--1) Trigger on Order Total Amount Change
+--Create a trigger on the ORDER table that logs any changes made to the total_amount field into the AUDIT_LOG table.
+--Ensure it captures the order_id, old_total, new_total, and log_date.
+
+
+
+
+
+
+
+
+
+
+
+--Submission Guidelines:
+--Each SQL object (procedure, view, function, trigger) should be in a separate .sql file named after the object.
+--Provide a report explaining the purpose of each SQL object and its relationship to the UI elements.
 
 
 
