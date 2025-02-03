@@ -113,7 +113,7 @@ $$;
 
 create or replace procedure scrop_insert_order_orderProduct_update_inventoryStock(
 	IN iparam_order_date date,
-	IN iparam_total_amount numeric,  -----units*price
+	IN iparam_total_amount numeric,  -----iparam_units*iparam_unit_rate
 	IN iparam_delivered_duration time,
 	IN iparam_customer_id int,
 	IN iparam_store_id int,
@@ -200,14 +200,54 @@ call scrop_payment_Insertion('2025-02-02', 50, 3);
 --even if no orders were placed in certain months. Use the dim dimension table as the primary data source 
 --and apply left joins with related tables to retrieve the necessary details. Incorporate the temporary table 
 --technique within the stored procedure for efficient data processing.
+--select * from orders;
 
+create or replace procedure scrop_store_revenue_analysis(
+)
+as $$
+BEGIN
+	----create tbl
+	create temp table store_revenue(
+		month_name varchar(20),
+		store_name varchar(20),
+		revenue_per_month numeric(10,2),
+		order_count int	
+	);
 
+	----insert tbl. select * from store_revenue
+	insert into store_revenue(month_name, store_name, revenue_per_month, order_count)
+	
+	(select
+	to_char(a.order_date, 'Month') 
+	,b.store_name
+	-- ,EXTRACT(month  FROM a.order_date) as month
+	,sum(a.total_amount)
+	,count(*) 
+	from orders a
+	left join store b using(store_id)
+	where EXTRACT(year FROM order_date) = date_part('year', CURRENT_DATE)
+	group by EXTRACT(month  FROM order_date),to_char(order_date, 'Month'),b.store_name
+	order by EXTRACT(month  FROM order_date),to_char(order_date, 'Month')
+	);
 
+END;
+$$ language plpgsql;
 
+--call scrop_store_revenue_analysis();
 
-
-
-
+---select * from orders
+select 
+	to_char(a.order_date, 'Month') AS Month
+	,b.store_name
+	-- ,EXTRACT(month  FROM a.order_date) as month
+	,sum(a.total_amount) as revenue_per_month
+	,count(*) 
+	from orders a
+left join store b using(store_id)
+where EXTRACT(year FROM order_date) = date_part('year', CURRENT_DATE)
+group by EXTRACT(month  FROM order_date),to_char(order_date, 'Month'),
+	b.store_name
+order by EXTRACT(month  FROM order_date),to_char(order_date, 'Month');
 
 -----------------------------------------------------------------------------------------------------------------------
 -- 7) Stored Procedure for Analyzing Sales by Store
@@ -216,6 +256,19 @@ call scrop_payment_Insertion('2025-02-02', 50, 3);
 --It should also include comparisons to the previous period's sales and highlight stores with significant performance changes. 
 --Use a temporary table to store intermediate calculations for efficient data processing and join data from relevant 
 --tables such as stores, sales, and transactions.
+select * from store;
+store name, 
+location, 
+total sales, 
+the number of transactions,
+the average transaction value for a given date range.
+
+
+
+select JSON_EXTRACT('[101, 102, 103]', '$[0]')
+
+
+
 
 ---------------------------------------------------------------------------------------------------------------------------------
 
@@ -354,46 +407,47 @@ language plpgsql;
 --1) Trigger on Order Total Amount Change
 --Create a trigger on the ORDER table that logs any changes made to the total_amount field into the AUDIT_LOG table.
 --Ensure it captures the order_id, old_total, new_total, and log_date.
+select * from orders;
+select * from AUDIT_ORDER_LOG;
 
+---cteate tbl
+create table AUDIT_ORDER_LOG(
+	log_id int GENERATED ALWAYS AS IDENTITY,
+	order_id int,
+	old_total numeric(10,2),
+	new_total numeric(10,2),
+	log_date date default current_timestamp
+);
 
+---function
+create or replace function FUN_trg_update_total_amount()
+returns trigger
 
+as $$
+BEGIN
+	IF OLD.total_amount is distinct from new.total_amount then
+		INSERT INTO AUDIT_ORDER_LOG(order_id, old_total, new_total)
+		VALUES (OLD.order_id, OLD.total_amount, NEW.total_amount);
+	END IF;
+	RETURN NEW;	
 
+END;
+$$ language plpgsql;
 
+----create trigger
+create trigger trg_update_total_amount
+AFTER update on orders
+for each row 
+WHEN(OLD.total_amount is distinct from new.total_amount)
+EXECUTE FUNCTION FUN_trg_update_total_amount();
 
-
-
-
+-----updating orders tbl
+update orders set total_amount = 100
+where order_id = 2;
 
 
 --Submission Guidelines:
 --Each SQL object (procedure, view, function, trigger) should be in a separate .sql file named after the object.
 --Provide a report explaining the purpose of each SQL object and its relationship to the UI elements.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

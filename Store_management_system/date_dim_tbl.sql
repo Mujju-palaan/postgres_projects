@@ -1,4 +1,4 @@
---select count(*) from DATE_DIM_SAMPLE;
+--select * from DATE_DIM_SAMPLE;
 
 CREATE TABLE DATE_DIM_SAMPLE (
     date_id INT PRIMARY KEY, -- Format: YYYYMM
