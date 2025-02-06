@@ -109,7 +109,7 @@ $$;
 -- select * from order_product;
 -- select * from inventory;
 
--- drop procedure if exists scrop_insert_order_update_inventory;
+-- drop procedure if exists scrop_insert_order_orderProduct_update_inventoryStock;
 
 create or replace procedure scrop_insert_order_orderProduct_update_inventoryStock(
 	IN iparam_order_date date,
@@ -118,47 +118,67 @@ create or replace procedure scrop_insert_order_orderProduct_update_inventoryStoc
 	IN iparam_customer_id int,
 	IN iparam_store_id int,
 	IN iparam_order_status varchar, ---( Delivered,Paid,Shipping,Closed,Ready for Delivery,Accepted,Packing)
-	IN iparam_order_id int,
+	-- IN iparam_order_id int,
 	IN iparam_product_id int,	
 	IN iparam_units	int,			---kitte units
 	IN iparam_unit_rate numeric 	--- price of unit
 )
 language plpgsql
 as $$
+DECLARE last_order_id INT;
+		available_stock int;
 
 BEGIN
-	---- insert data into orders
+	
+	
+	---- insert data into orders select * from orders
 	insert into orders(order_date, total_amount, delivered_duration, customer_id, store_id, order_status)
 	values
-	(iparam_order_date, iparam_total_amount, iparam_delivered_duration, iparam_customer_id, iparam_store_id, iparam_order_status);
+	(iparam_order_date, iparam_total_amount, iparam_delivered_duration,
+	iparam_customer_id, iparam_store_id, iparam_order_status)
+	returning order_id into last_order_id;
+
+	---- Get the auto-increment order_id
+    -- SET last_order_id = LAST_INSERT_ID();
 
 	----insert data into order_product
 	insert into order_product(order_id, product_id, units, unit_rate, total_amount)
 	values
-	(iparam_order_id, iparam_product_id,iparam_units, iparam_unit_rate, iparam_total_amount);
-
+	(last_order_id, iparam_product_id,iparam_units, iparam_unit_rate, iparam_total_amount);
+	----last_order_id ye likhee jab se error aara
+	
 	----updating the INVENTORY table to deduct the available stock accordingly.
 	update INVENTORY set quantity_in_stock = quantity_in_stock - iparam_units
 	where product_id = iparam_product_id;
-	
+
+	-- Validate inventory stock
+   --      IF available_stock IS NULL THEN
+   --          RAISE EXCEPTION 'Product ID % not found in inventory', iparam_product_id;
+   --      ELSIF available_stock < iparam_units THEN
+   --          RAISE EXCEPTION 'Not enough stock for product ID %. Available: %, Required: %'
+			-- , iparam_product_id, available_stock, iparam_units;
+   --      END IF;
+
 END;
 $$;
 
 ----My problem is inserting without hard coding,
-----How to insert new order_id in order_product which is already present in scrop?
-----insted of hard coding total_amount, it should automatic calculate (Units*price)
+---- 1) How to insert new order_id in order_product which is already present in scrop? (solved)
+---- Get the auto-increment order_id
+    --SET last_order_id = LAST_order_id();
+---- 2)insted of hard coding total_amount, it should automatic calculate (Units*price) ?????
 
---CALL public.scrop_insert_order_orderproduct_update_inventorystock(
-	'2025-02-02',	--<IN iparam_order_date date>,
-	125,			--<IN iparam_total_amount  numeric>,
+--CALL scrop_insert_order_orderproduct_update_inventorystock(
+	'2025-03-02',	--<IN iparam_order_date date>,
+	500,			--<IN iparam_total_amount  numeric>,
 	'16:00:00',		--<IN iparam_delivered_duration  time without time zone>,
 	1,				--<IN iparam_customer_id  integer>,
 	1,				--<IN iparam_store_id  integer>,
 	'Delivered',	--<IN iparam_order_status  character varying>,
-	5,				--<IN iparam_order_id  integer>,
-	1,				--<IN iparam_product_id  integer>,
+	-- 5,				--<IN iparam_order_id  integer>,
+	2,				--<IN iparam_product_id  integer>,
 	5,				--<IN iparam_units  integer>,
-	25				--<IN iparam_unit_rate  numeric>
+	100				--<IN iparam_unit_rate  numeric>
 );
 
 
@@ -166,8 +186,8 @@ $$;
 -- 5)Stored Procedure for Payment Insertion
 -- Write a stored procedure to insert new payment information for an order in the Payment Management screen. 
 --Also update order status as piad in order table.
-select * from payment;
-select * from orders;
+-- select * from payment;
+-- select * from orders;
 
 create or replace procedure scrop_payment_Insertion(
 	IN iparam_payment_date date,
@@ -188,7 +208,7 @@ BEGIN
 END;
 $$;
 
-call scrop_payment_Insertion('2025-02-02', 50, 3);
+--call scrop_payment_Insertion('2025-02-02', 50, 3);
 
 
 ---------------------------------------------------------------------------------------------------------------------------------------
@@ -265,7 +285,6 @@ the average transaction value for a given date range.
 
 
 
-select JSON_EXTRACT('[101, 102, 103]', '$[0]')
 
 
 
@@ -317,7 +336,7 @@ create view view_inventory_overview AS
 	inner join product c ON b.product_id = c.product_id
 	;
 
-select * from view_inventory_overview;
+--select * from view_inventory_overview;
 
 
 -- 4) View for Weekend Sales
@@ -397,9 +416,9 @@ language plpgsql;
 
 --select fun_get_discount('2025-01-18')
 
---select discount_code 
-	from Discount
-	where (SELECT DATE(created_at)) =  '2025-01-18';
+-- select discount_code 
+-- 	from Discount
+-- 	where (SELECT DATE(created_at)) =  '2025-01-18';
 
 
 --------------------------------------------------------------------------------------------------------------------------------------
@@ -420,7 +439,7 @@ create table AUDIT_ORDER_LOG(
 );
 
 ---function
-create or replace function FUN_trg_update_total_amount()
+create or replace function TRG_FUN_trg_update_total_amount()
 returns trigger
 
 as $$
