@@ -147,17 +147,21 @@ BEGIN
 	(last_order_id, iparam_product_id,iparam_units, iparam_unit_rate, iparam_total_amount);
 	----last_order_id ye likhee jab se error aara
 	
+	-----validate
+	select quantity_in_stock into available_stock
+	from INVENTORY
+	where product_id = iparam_product_id;
+	
+	IF available_stock IS NULL THEN
+	RAISE EXCEPTION 'Product ID % not found in inventory', iparam_product_id;
+	ELSIF available_stock < iparam_units THEN
+		RAISE EXCEPTION 'Not enough stock for product ID %. Available: %, Required: %'
+		, iparam_product_id, available_stock, iparam_units;
+	END IF;
+	
 	----updating the INVENTORY table to deduct the available stock accordingly.
 	update INVENTORY set quantity_in_stock = quantity_in_stock - iparam_units
 	where product_id = iparam_product_id;
-
-	-- Validate inventory stock
-   --      IF available_stock IS NULL THEN
-   --          RAISE EXCEPTION 'Product ID % not found in inventory', iparam_product_id;
-   --      ELSIF available_stock < iparam_units THEN
-   --          RAISE EXCEPTION 'Not enough stock for product ID %. Available: %, Required: %'
-			-- , iparam_product_id, available_stock, iparam_units;
-   --      END IF;
 
 END;
 $$;
@@ -222,31 +226,35 @@ $$;
 --technique within the stored procedure for efficient data processing.
 --select * from orders;
 
+--drop procedure scrop_store_revenue_analysis;
 create or replace procedure scrop_store_revenue_analysis(
 )
 as $$
 BEGIN
 	----create tbl
-	create temp table store_revenue(
+	create temp table temp_store_revenue(
+		date_id int,
 		month_name varchar(20),
 		store_name varchar(20),
-		revenue_per_month numeric(10,2),
-		order_count int	
+		order_per_month int	,
+		revenue_per_month numeric(10,2)
 	);
 
-	----insert tbl. select * from store_revenue
-	insert into store_revenue(month_name, store_name, revenue_per_month, order_count)
-	
+	----insert tbl. select * from temp_store_revenue
+	insert into temp_store_revenue(date_id, month_name, store_name, order_per_month, revenue_per_month)
+	----select Query select * from date_dim_sample
 	(select
-	to_char(a.order_date, 'Month') 
+	 dd.date_id
+	,to_char(a.order_date, 'Month') 
 	,b.store_name
 	-- ,EXTRACT(month  FROM a.order_date) as month
+	,count(a.order_id)
 	,sum(a.total_amount)
-	,count(*) 
-	from orders a
-	left join store b using(store_id)
+	from date_dim_sample dd
+	left join orders a On dd.calendar_date = a.order_date
+	inner join store b using(store_id)
 	where EXTRACT(year FROM order_date) = date_part('year', CURRENT_DATE)
-	group by EXTRACT(month  FROM order_date),to_char(order_date, 'Month'),b.store_name
+	group by EXTRACT(month  FROM order_date),to_char(order_date, 'Month'), b.store_name, dd.date_id 
 	order by EXTRACT(month  FROM order_date),to_char(order_date, 'Month')
 	);
 
@@ -254,6 +262,7 @@ END;
 $$ language plpgsql;
 
 --call scrop_store_revenue_analysis();
+--select * from temp_store_revenue;
 
 ---select * from orders
 select 
@@ -276,19 +285,46 @@ order by EXTRACT(month  FROM order_date),to_char(order_date, 'Month');
 --It should also include comparisons to the previous period's sales and highlight stores with significant performance changes. 
 --Use a temporary table to store intermediate calculations for efficient data processing and join data from relevant 
 --tables such as stores, sales, and transactions.
-select * from store;
-store name, 
-location, 
-total sales, 
-the number of transactions,
-the average transaction value for a given date range.
 
+-- total sales, 
+-- the number of transactions,
+-- the average transaction value for a given date range.
 
+create or replace procedure scrop_sales_analyzing(
+	-- IN iparam_
+)
+language plpgsql
+as $$
+BEGIN
+	----create temp tbl
+	create temp table temp_sales_analyzing(
+		store_name varchar(255) not null, 
+		location varchar(255) not null,
+		sales_count_per_day int not null,
+		total_sales numeric(10,2) not null,
+		transactions_per_day int not null,					----no. of payments
+		avg_transactions numeric(10,2) not null			----avg payment for a given date range.
+	);
 
+	----insert into temp tbl select * from store; select * from orders; select * from order_product; select * from payment;
+	insert into temp_sales_analyzing(store_name, location, sales_count_per_day ,total_sales, transactions_per_day, avg_transactions)
+	(select  a.store_name, a.location
+			,COALESCE(count(b.order_id), 0) 
+			,COALESCE(sum(b.total_amount), 0)
+			,COALESCE(count(c.payment_id), 0)
+			,COALESCE (avg(c.amount_paid), 0) 
+	FROM store a
+	inner join orders b using(store_id)
+	inner join payment c using(order_id)
+	group by a.store_name, a.location, c.payment_date)
+	;
+	--It should also include comparisons to the previous period's sales and highlight stores with significant performance changes. 
 
+END;
+$$;
 
-
-
+--call scrop_sales_analyzing();
+--select * from temp_sales_analyzing;
 ---------------------------------------------------------------------------------------------------------------------------------
 
 --View Tasks:

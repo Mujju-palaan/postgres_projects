@@ -347,7 +347,6 @@ $$;
 alter table billing add column billing_status varchar(50);
 -- select * from payment;
 -- select * from billing;
-call scrop_insert_payment_receipt_update_billing_status(1,1,500,current_date);
 create or replace procedure scrop_insert_payment_receipt_update_billing_status(
 	IN iparam_billing_id int,
 	IN iparam_patient_id int,
@@ -398,3 +397,5 @@ BEGIN
 
 END;
 $$;
+
+--call scrop_insert_payment_receipt_update_billing_status(1,1,500,current_date);
