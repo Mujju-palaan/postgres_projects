@@ -1,3 +1,4 @@
+--4
 -- Assignment Tasks:
 -- Stored Procedure Tasks:
 
@@ -76,14 +77,14 @@ $$ language plpgsql;
 -- 4)Stored Procedure for Prescription Management
 -- Create a stored procedure to display detailed prescription information.
 ---If a medicine is prescribed for 3 days, generate rows for each day, and if it is prescribed 3 times a day 
---for 3 days, display 3 rows. Utilize a dim_date table with a JOIN and apply the temporary table technique 
+--for 3 days, display 9 rows. Utilize a dim_date table with a JOIN and apply the temporary table technique 
 --to represent the morning, afternoon, and evening dosages.
 
 --select * from prescription;
 --select to_char(current_date, 'Day') AS DAY
 
+--4a)
 --drop procedure scrop_temp_Prescription_Management;
-
 create or replace procedure scrop_temp_Prescription_Management(
 	IN iparam_p_name varchar,
 	IN iparam_dosage varchar,
@@ -110,7 +111,7 @@ BEGIN
 );
 
 	--inser into tbl
-	insert into temp_Prescription_Management_9rows(p_name, dosage, p_start_date, p_end_date, morning, evening, night) 
+	insert into temp_Prescription_Management(p_name, dosage, p_start_date, p_end_date, morning, evening, night) 
 	values(iparam_p_name, iparam_dosage, iparam_p_start_date, iparam_p_end_date, iparam_morning, iparam_evening, iparam_night);
 
 END;
@@ -119,6 +120,53 @@ $$;
 --call scrop_temp_Prescription_Management('Dolo 650', '650mg', '2025-01-01', '2025-01-03', true, true, true);
 
 --select * from temp_Prescription_Management;
+
+--4b)
+--drop procedure scrop_temp_Prescription_Management;
+
+create or replace procedure scrop_temp_Prescription_Management_4b(
+	IN iparam_Prescription_name varchar,
+	IN iparam_dosage varchar,
+	IN iparam_Prescription_date date,
+	IN iparam_morning boolean,
+	IN iparam_evening boolean,
+	IN iparam_night boolean
+)
+language plpgsql
+as $$
+BEGIN
+	---temp tbl
+	create temp table temp_Prescription_Management_4b(
+		Prescription_id int generated always as identity primary key, 
+		Prescription_name varchar(255) not null,
+		dosage varchar(50) not null,
+		Prescription_date date default current_date not null,
+		morning boolean not null,
+		evening boolean not null,
+		night boolean not null,
+		created_at date default current_date not null
+);
+
+	--inser into tbl
+	insert into temp_Prescription_Management(Prescription_name, dosage, Prescription_date,morning, evening, night) 
+	values(iparam_Prescription_name, iparam_dosage, iparam_Prescription_date,iparam_morning, iparam_evening, iparam_night);
+
+	WITH RECURSIVE numbers AS (
+                                SELECT 0 AS n
+                                UNION ALL
+                                SELECT n + 1 FROM numbers WHERE n + 1 < json_array_length('[1,2,3]')
+                                )
+    SELECT CAST(JSON_UNQUOTE(JSON_EXTRACT(iparam_employee_ids, CONCAT('$[', numbers.n, ']'))) AS UNSIGNED) AS employee_id
+    FROM numbers;
+
+
+
+END;
+$$;
+
+--call scrop_temp_Prescription_Management_4b('Dolo 650', '650mg', '2025-01-01', '2025-01-03', true, true, true);
+
+--select * from temp_Prescription_Management_4b;
 
 ----------------------------------------------------------------------------------------------------------------------------------------------
 -- 5)Stored Procedure for Billing Information 		----function
@@ -185,7 +233,7 @@ $$ language plpgsql;
 -- Create a stored procedure to insert patient appointment details while ensuring that the assigned doctor 
 --or room is not double-booked. Additionally, automatically generate a billing record based on the doctor's per-visit fee.
 
--- insert patient appointment details
+
 --ensuring that the assigned doctor or room is not double-booked
 -- automatically generate a billing record based on the doctor's per-visit fee
 -- select * from appointment;
@@ -193,6 +241,8 @@ $$ language plpgsql;
 -- select * from billing;
 -- select * from room;
 -- select * from doctor;
+call scrop_insert_appointment_generate_bill('2025-02-17', '12:32:00','Scheduled', 1,2,7,4,5,'2025-02-07','Doctor Appointment',
+											'Check up and medication', 'unpaid');
 
 create or replace procedure scrop_insert_appointment_generate_bill(
 	IN iparam_appointment_date date,
@@ -207,8 +257,8 @@ create or replace procedure scrop_insert_appointment_generate_bill(
 	IN iparam_bill_date date,
 	IN iparam_bill_type varchar,
 	IN iparam_description text,
-	IN iparam_total_amount numeric(10,2),
-	IN iparam_balance_amount numeric(10,2),
+	-- IN iparam_total_amount numeric(10,2),
+	-- IN iparam_balance_amount numeric(10,2),
 	-- IN iparam_admission_id int,
 	IN iparam_billing_status varchar
 )
@@ -220,6 +270,7 @@ DECLARE
 		appointment_count int;
 		doctor_fee numeric(10,2);
 		room_fee numeric(10,2);
+		last_patient_id int;
 
 BEGIN
 	----  select * from appointment;
@@ -231,35 +282,32 @@ BEGIN
         RAISE EXCEPTION 'Doctor is already booked for this time';
     END IF;
 
-	----  select * from room;
+	----  select * from room;   select * from room_admit;
 	SELECT COUNT(*) 
-    FROM room into room_count
-    WHERE room_id = iparam_room_id;
+    FROM room_admit into room_count
+    WHERE iparam_appointment_date between start_date and end_date;
 
 	IF room_count > 0 THEN
-        RAISE EXCEPTION 'Room is already booked for this time';
+        RAISE EXCEPTION 'Room is already booked for this date:%', ;
     END IF;
-
-	---doctor fee
-	SELECT per_visit_cost INTO doctor_fee
-    FROM doctor
-    WHERE doctor_id = iparam_doctor_id;
-
-	--- room
-	SELECT daily_rate INTO room_fee
-    FROM room
-    WHERE room_id = iparam_room_id;
 	
 	---insert patient appointment details
 	insert into appointment(appointment_date, appointment_time, status, patient_id, doctor_id, room_id, incharge_nurse_id, admission_id )
 	values(iparam_appointment_date, iparam_appointment_time, iparam_status, iparam_patient_id, iparam_doctor_id,
-			iparam_room_id, iparam_incharge_nurse_id, iparam_admission_id);
-
+			iparam_room_id, iparam_incharge_nurse_id, iparam_admission_id)
+			returning patient_id into last_patient_id;
+	
+	---doctor fee select * from doctor
+	SELECT ((a.per_visit_cost)*(count(b.patient_id))) INTO doctor_fee
+    FROM doctor a
+	inner join appointment b using(doctor_id)
+	WHERE doctor_id = iparam_doctor_id AND patient_id = last_patient_id
+	group by a.per_visit_cost ;
+	
 	---insert patient billing details
 	insert into billing(bill_date, bill_type, description, total_amount, balance_amount, admission_id, billing_status)
-	values(iparam_bill_date, iparam_bill_type, iparam_description, iparam_total_amount (doctor_fee + room_fee)
-			, iparam_balance_amount, 
-			iparam_admission_id, iparam_billing_status);
+	values(iparam_bill_date, iparam_bill_type, iparam_description, doctor_fee
+			, doctor_fee, iparam_admission_id, iparam_billing_status);
 	
 END;
 $$;
