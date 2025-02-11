@@ -87,3 +87,5 @@ create table CLASSROOM(
 	foreign key(department_id) references department(department_id)
 );
 
+
+

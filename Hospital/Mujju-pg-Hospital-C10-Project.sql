@@ -151,16 +151,7 @@ BEGIN
 	insert into temp_Prescription_Management(Prescription_name, dosage, Prescription_date,morning, evening, night) 
 	values(iparam_Prescription_name, iparam_dosage, iparam_Prescription_date,iparam_morning, iparam_evening, iparam_night);
 
-	WITH RECURSIVE numbers AS (
-                                SELECT 0 AS n
-                                UNION ALL
-                                SELECT n + 1 FROM numbers WHERE n + 1 < json_array_length('[1,2,3]')
-                                )
-    SELECT CAST(JSON_UNQUOTE(JSON_EXTRACT(iparam_employee_ids, CONCAT('$[', numbers.n, ']'))) AS UNSIGNED) AS employee_id
-    FROM numbers;
-
-
-
+	
 END;
 $$;
 
@@ -447,3 +438,179 @@ END;
 $$;
 
 --call scrop_insert_payment_receipt_update_billing_status(1,1,500,current_date);
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--View Tasks:
+--1) View for Room Information. select * from room;
+--Create a view to display room details including room id, room name, daily rate and room type.
+create view view_room_details AS
+	select room_id, room_number, room_type, daily_rate  
+	from room;
+
+--select * from view_room_details;
+
+--2) View for Appointment Details,, select * from appointment,,select * from patient,,select * from doctor,,select * from billing
+--Create a view to display appointment details including patient name, doctor name, doctor specialization, 
+--appointment date, room name and status.
+create view view_appointment_details AS
+	select b.first_name||' '||b.last_name as patient_name,
+			c.first_name||' '||c.last_name as doctor_name,
+			c.specialization,
+			a.appointment_date,
+			d.room_type,
+			billing_status			
+	from appointment a 
+	inner join patient b ON a.patient_id=b.patient_id
+	inner join doctor c ON a.doctor_id=c.doctor_id
+	inner join room d ON a.room_id=d.room_id
+	inner join room_admit e ON a.admission_id=e.admission_id
+	inner join billing f ON e.admission_id=f.admission_id
+--select * from view_appointment_details;
+			
+
+--3) View for Monthly Room Occupancy Details
+--Write a view that lists each room occupancy on daily basis with details such as calendar date, patient name, 
+--incharge nurse, and daily billing rate. If a room is unoccupied on a given date, display the room ID without 
+--any associated patient information. You need to JOIN date dim table with room admit table. LEFT JOIN plays crucial role in this solution.
+create view view_monthly_room_occupancy_details as
+	select 
+			g.calendar_date
+			,d.room_number
+			,b.first_name||' '||b.last_name as patient_name
+			,c.first_name||' '||c.last_name as nurse_name
+			,c.nurse_id
+			,f.bill_date
+			-- ,f.total_amount
+			,(e.end_date-e.start_date)*d.daily_rate as daily_billing_amount
+	from appointment a
+	left join patient b using(patient_id)
+	left join nurse c ON a.incharge_nurse_id=c.nurse_id
+	left join room d ON a.room_id=d.room_id
+	left join room_admit e ON a.admission_id=e.admission_id
+	left join billing f ON e.admission_id=f.admission_id
+	left join date_dim g ON g.calendar_date = f.bill_date
+	;
+	
+
+--select * from view_monthly_room_occupancy_details;
+
+--4) View for Patient Discharge Billing Information
+--Create a view to display treatment billing information, including treatment description, bill date, bill amount, 
+--paid amount, pay receipt id, and balance amount. If multiple payments have been made for a single bill, display the 
+--receipt IDs as a comma-separated list. There shall be one record per bill, repeating treatment information is ok.
+create view view_patient_discharge_billing_info AS
+	select a.bill_date, a.total_amount as bill_amount, --billing
+			b.amount_paid,  ---payment
+			COALESCE(STRING_AGG(b.payment_id::TEXT, ', '), 'No Payment') AS receipt_ids,			
+			a.balance_amount --billing
+			from billing a
+			inner join payment b ON a.billing_id=b.bill_id
+			group by b.amount_paid, b.payment_id,a.bill_date, a.total_amount,balance_amount
+	;
+
+--select * from view_patient_discharge_billing_info;
+
+
+--Function Tasks:
+--1) Function to Calculate Total Bill per Patient
+--Write a function to calculate the total amount billed to a patient based on the treatments and services provided.
+create function fun_calculate_total_bill_per_patient(iparam_patient_id int)
+	returns numeric
+as $$
+
+DECLARE total_bill_per_patient numeric;
+
+BEGIN
+	select 
+	-- c.patient_id,
+	-- c.first_name||' '||c.last_name AS patient_name,
+	sum((b.treatment_end_date - b.treatment_start_date)*d.daily_rate) AS total_bill_per_patient
+	into total_bill_per_patient
+	from appointment a
+	inner join patient_admission b using(admission_id)
+	inner join patient c ON b.patient_id=c.patient_id
+	inner join room d ON a.room_id = d.room_id
+	where c.patient_id = iparam_patient_id
+	group by c.patient_id
+	order by c.patient_id
+	;
+
+	return total_bill_per_patient;
+END;
+$$ 
+language plpgsql;
+
+--select fun_calculate_total_bill_per_patient(3);
+
+--2) Function to Calculate Appointment Count per Doctor
+--Write a function that calculates the number of appointments scheduled for a specific doctor.
+
+--drop function calculate_appointment_per_doctor
+create or replace function fun_calculate_appointment_per_doctor(iparam_doctor_id int)
+	returns int
+
+as $$
+DECLARE appointment_per_doctor int;
+
+BEGIN
+	select count(a.appointment_id)
+	into appointment_per_doctor
+	from appointment a
+	inner join doctor b using(doctor_id)
+	where b.doctor_id = iparam_doctor_id
+	group by b.doctor_id
+	order by b.doctor_id
+	;
+	return appointment_per_doctor;
+END;
+$$
+language plpgsql;
+
+--select fun_calculate_appointment_per_doctor(2);
+
+--Trigger Task:
+--Trigger on Appointment Status Change
+---Create a trigger on the APPOINTMENT table that logs changes to the status field into the AUDIT_LOG table. 
+--Capture the appointment_id, old_status, new_status, log_date, and user_id.
+--select * from appointment_log;
+
+create table appointment_log(
+	log_id int GENERATED ALWAYS AS IDENTITY,
+	appointment_id int,
+	old_status varchar(50),
+	new_status varchar(50),
+	log_date timestamp default current_timestamp,
+	doctor_id int,
+	nurse_id int
+);
+
+---function
+create or replace function trg_fun_update_status()
+returns trigger
+
+as $$
+BEGIN
+	IF OLD.status is DISTINCT from NEW.status then
+		INSERT INTO appointment_log(appointment_id, old_status, new_status, doctor_id, nurse_id)
+		VALUES(OLD.appointment_id, OLD.status, NEW.status, OLD.doctor_id, OLD.incharge_nurse_id);
+	END IF;
+	return NEW;
+	
+END;
+$$
+language plpgsql;
+
+
+---create trigger
+create or replace trigger trg_update_status
+AFTER update on appointment
+for each row 
+WHEN(OLD.status is distinct from new.status)
+EXECUTE FUNCTION trg_fun_update_status();
+
+update appointment
+set status = 'Scheduled'
+where appointment_id = 1;	
