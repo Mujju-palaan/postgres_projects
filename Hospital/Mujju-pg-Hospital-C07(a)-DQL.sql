@@ -323,81 +323,137 @@ where extract(year from treatment_start_date) in (select extract( year from curr
 
 -- 17. COALESCE, IFNULL, NULLIF Command
 -- Select all patients and use COALESCE to replace null emails with 'No Email'.
+select 
+	first_name||' '||last_name as patient_name,
+	COALESCE(email,'No Email') 
+	from patient;
+	
 -- Use IFNULL to replace null phone_number values in the DOCTOR table.
--- Use NULLIF to compare treatment_start_date and appointment_date in the PATIENT_ADMIT table and return NULL if they are the same.
+select 
+	first_name||' '||last_name as doctor_name,
+	COALESCE(cast(phone_number as varchar),'Not Provided') 
+	from doctor;
+	
+-- Use NULLIF to compare treatment_start_date and appointment_date in the PATIENT_ADMIT table 
+--and return NULL if they are the same.
+select b.patient_id, a.appointment_date, c.treatment_start_date,
+	NULLIF (c.treatment_start_date, a.appointment_date) AS adjusted_treatment_start_date
+	from appointment a
+	inner join patient b using(patient_id)
+	inner join patient_admission c ON b.patient_id=c.patient_id
+;
 -- Select all nurses and replace null hire_date with 'Unknown' using COALESCE.
+
 
 -- 18. STRING Functions
 -- Select all patients' first_name in uppercase using the UPPER() function.
+
 -- Select all doctors' specialization in lowercase using the LOWER() function.
+
 -- Use CONCAT() to combine the first_name and last_name of doctors.
+
 -- Select all patients' last_name and find the length of the name using LENGTH().
 
 -- 19. DATE Functions
 -- Select all patients and show their date_of_birth formatted as 'YYYY-MM-DD' using TO_CHAR().
+
 -- Add 1 year to all appointment_date values in the APPOINTMENT table using AGE().
+
 -- Subtract 1 month from all treatment_start_date values using INTERVAL.
+
 -- Select all nurses and extract the year from their hire_date using EXTRACT().
 
 -- 20. NUMERIC Functions
 -- Select the dosage from the MEDICATION table and round it to the nearest integer using ROUND().
+
 -- Select all total_amount from the BILLING table and use CEIL() to round up.
+
 -- Use FLOOR() to round down the total_amount in the BILLING table.
+
 -- Select the highest total_amount from the BILLING table using MAX().
 
 -- 21. CAST and CONVERT Command
 -- Select all patients and cast the patient_id as a string using CAST().
+
 -- Convert total_amount in the BILLING table to DECIMAL using CONVERT().
+
 -- Cast treatment_id in the TREATMENT table to INTEGER.
+
 -- Convert the appointment_date from the APPOINTMENT table into TEXT.
 
 -- 22. CONCAT and CONCAT_WS Functions
 -- Use CONCAT() to join first_name and last_name with a space in between in the DOCTOR table.
+
 -- Use CONCAT_WS() to combine the department_name and location with a comma in the DEPARTMENT table.
+
 -- Use CONCAT() to combine the room_number and room_type from the ROOM table.
+
 -- Use CONCAT_WS() to combine first_name, last_name, and email from the PATIENT table.
 
 -- 23. LIKE and NOT LIKE
 -- Select patients whose email ends with 'hospital.com' using LIKE.
+
 -- Select doctors where specialization contains 'Surgery' using LIKE.
+
 -- Select patients whose last_name does not start with 'J' using NOT LIKE.
+
 -- Select departments where department_name contains 'Oncology' using LIKE.
 
 -- 24. EXISTS and NOT EXISTS
 -- Select doctors where appointments exist in the APPOINTMENT table using EXISTS.
+
 -- Select patients where no prescriptions exist using NOT EXISTS.
+
 -- Select rooms where treatments exist using EXISTS.
+
 -- Select departments where no doctors are assigned using NOT EXISTS.
 
 -- 25. JOIN Commands
 -- Select all patients and their corresponding appointments using INNER JOIN between the PATIENT and APPOINTMENT tables.
+
 -- Select all prescriptions and their corresponding medications using INNER JOIN between PRESCRIPTION and MEDICATION.
+
 -- Select all nurses and their assigned departments using LEFT JOIN between NURSE and DEPARTMENT.
+
 -- Select all treatments and their corresponding doctors using INNER JOIN between TREATMENT and DOCTOR.
 
 -- 26. BETWEEN Command
 -- Select all appointments where the appointment_date is between '2023-01-01' and '2023-12-31'.
+
 -- Select all treatments where the treatment_date is between '2022-01-01' and '2022-12-31'.
+
 -- Select all patients where the date_of_birth is between '1960-01-01' and '2000-12-31'.
+
 -- Select all rooms where the capacity is between 2 and 10.
 
 -- 27. IN and NOT IN Command
 -- Select all patients where the patient_id is in (1, 2, 3).
+
 -- Select all doctors where the specialization is in ('Cardiology', 'Oncology').
+
 -- Select all appointments where the status is not in ('Cancelled', 'No Show').
+
 -- Select all departments where the department_id is in (1, 2, 5).
 
 -- 28. UNION Command
 -- Select patients from PATIENT and HOSPITAL_PATIENT using UNION.
+
 -- Select doctors from two different departments using UNION.
+
 -- Use UNION to combine appointments from two different years.
+
 -- Use UNION ALL to combine treatments from multiple departments.
 
 -- 29. ARRAY Command
 -- Select all specialization and convert it into an array using ARRAY_AGG().
+
 -- Use UNNEST() to expand arrays from the DEPARTMENT table.
+
 -- Convert patient names into an array using ARRAY_AGG().
+
 -- Use ARRAY functions to select and manipulate data from the TREATMENT table.
+
+
 -- GOOD LUCK WITH YOUR ASSIGNMENT!!!
 -- Don't forget to contact us if you need any further assistance with your assignments, and most importantly, for a manual review and approval of your work.
 

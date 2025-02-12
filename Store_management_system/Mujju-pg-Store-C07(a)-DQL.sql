@@ -652,10 +652,13 @@ FROM product;
 --c) Convert product names into an array using STRING_AGG() in the ORDER_PRODUCT table.
 select 
 	STRING_AGG(distinct product_name, ', ') AS pproduct_array
-	from ORDER_PRODUCT a
-	inner join product b ON a.product_id=b.product_id;
+	from product;
 	
 --d) Use ARRAY functions to select and manipulate data from the STORE table.
+SELECT store_name[1] as store_name
+FROM (select '{concu,mujju}'::text[] as store_name);
+
+SELECT c1[3] FROM (SELECT '{32,50,28}'::text[] as c1);
 
 
 --GOOD LUCK WITH YOUR ASSIGNMENT!!!

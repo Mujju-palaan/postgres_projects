@@ -49,48 +49,6 @@ values
     ('Pineapple', 'fruits', 3.99, 'Tropical and tangy pineapple.', 'FRUIT-PINEAPPLE-005')
 ;
 
---select * from supplier;
-insert into supplier(supplier_name, contact_number)
-values ('Global Supplies Co.', '123-456-7890'),
-    ('Fresh Produce Inc.', '234-567-8901'),
-    ('Tech Parts Ltd.', '345-678-9012'),
-    ('Eco Goods Supplies', '456-789-0123'),
-    ('Urban Essentials', '567-890-1234'),
-    ('Greenfield Supplies', '678-901-2345'),
-    ('QuickFix Distributors', '789-012-3456'),
-    ('Summit Industrial Supply', '890-123-4567'),
-    ('Apex Wholesale', '901-234-5678'),
-    ('BrightPath Logistics', '012-345-6789')
-;
-
---select * from SUPPLIER_PRODUCT;
-insert into SUPPLIER_PRODUCT(supplier_id, product_id)
-values(1,1),
-		(2,2),
-		(3,3),
-		(4,4),
-		(5,5),
-		(6,6),
-		(7,7),
-		(8,8),
-		(9,9),
-		(10,10)
-;
-
---select * from inventory;
-insert into inventory(store_id,product_id,quantity_in_stock,supplier_id)
-values(1,1,123444,1),
-		(2,2,123,2),
-		(3,3,3444,3),
-		(4,4,44444,4),
-		(5,5,5555,5),
-		(6,6,66666,6),
-		(7,7,77777,7),
-		(8,8,8888,8),
-		(9,9,9999,9),
-		(10,10,123444,10)
-;
-
 --select * from customer;
 insert into customer(first_name,last_name,gender,id_type,id_number,email,phone_number,address,city_id)
 values('Alice', 'Walker', 'F', 'passport', 'P123456789', 'alice.walker@example.com', '123-456-7890', '45 Maple Lane', 1),
@@ -151,6 +109,48 @@ values (1, 1, 3, 50.00, 150.00),
     (6, 8, 4, 77.60, 310.40),
     (7, 9, 2, 25.00, 50.00),
     (8, 10, 8, 25.00, 200.00)
+;
+
+--select * from supplier;
+insert into supplier(supplier_name, contact_number)
+values ('Global Supplies Co.', '123-456-7890'),
+    ('Fresh Produce Inc.', '234-567-8901'),
+    ('Tech Parts Ltd.', '345-678-9012'),
+    ('Eco Goods Supplies', '456-789-0123'),
+    ('Urban Essentials', '567-890-1234'),
+    ('Greenfield Supplies', '678-901-2345'),
+    ('QuickFix Distributors', '789-012-3456'),
+    ('Summit Industrial Supply', '890-123-4567'),
+    ('Apex Wholesale', '901-234-5678'),
+    ('BrightPath Logistics', '012-345-6789')
+;
+
+--select * from SUPPLIER_PRODUCT;
+insert into SUPPLIER_PRODUCT(supplier_id, product_id)
+values(1,1),
+		(2,2),
+		(3,3),
+		(4,4),
+		(5,5),
+		(6,6),
+		(7,7),
+		(8,8),
+		(9,9),
+		(10,10)
+;
+
+--select * from inventory;
+insert into inventory(store_id,product_id,quantity_in_stock,supplier_id)
+values(1,1,123444,1),
+		(2,2,123,2),
+		(3,3,3444,3),
+		(4,4,44444,4),
+		(5,5,5555,5),
+		(6,6,66666,6),
+		(7,7,77777,7),
+		(8,8,8888,8),
+		(9,9,9999,9),
+		(10,10,123444,10)
 ;
 
 --select * from payment
@@ -452,30 +452,30 @@ values ('SUMMER20',20.00);
 -- Create the DATE_DIM table
 -- select * from DATE_DIM
 
-Create table DATE_DIM (
-    date_id int unique NOT NULL PRIMARY KEY, -- YYYYMM
-    calendar_date DATE default current_date NOT NULL,                       
-    year INT NOT NULL,
-    month INT check(month in (1,2,3,4,5,6,7,8,9,10,11,12)) NOT NULL,
-    day_of_the_month INT check(day_of_the_month >= 1 AND day_of_the_month <=31) NOT NULL,                    
-    week_day_number INT check(week_day_number >= 1 AND week_day_number <=7) NOT NULL,
-    week_day_name VARCHAR(9) 
-    check(week_day_name in ('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday')) NOT NULL,
-    yearly_week_number INT check(yearly_week_number >= 1 AND yearly_week_number <=53) NOT NULL,
-    month_start_date_flag BOOLEAN NOT NULL,
-    month_end_date_flag BOOLEAN NOT NULL,
-    year_start_date_flag BOOLEAN NOT NULL,
-    year_end_date_flag BOOLEAN NOT NULL,
-    holiday_flag BOOLEAN NOT NULL
-);
+-- Create table DATE_DIM (
+--     date_id int unique NOT NULL PRIMARY KEY, -- YYYYMM
+--     calendar_date DATE default current_date NOT NULL,                       
+--     year INT NOT NULL,
+--     month INT check(month in (1,2,3,4,5,6,7,8,9,10,11,12)) NOT NULL,
+--     day_of_the_month INT check(day_of_the_month >= 1 AND day_of_the_month <=31) NOT NULL,                    
+--     week_day_number INT check(week_day_number >= 1 AND week_day_number <=7) NOT NULL,
+--     week_day_name VARCHAR(9) 
+--     check(week_day_name in ('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday')) NOT NULL,
+--     yearly_week_number INT check(yearly_week_number >= 1 AND yearly_week_number <=53) NOT NULL,
+--     month_start_date_flag BOOLEAN NOT NULL,
+--     month_end_date_flag BOOLEAN NOT NULL,
+--     year_start_date_flag BOOLEAN NOT NULL,
+--     year_end_date_flag BOOLEAN NOT NULL,
+--     holiday_flag BOOLEAN NOT NULL
+-- );
 
-insert into DATE_DIM(date_id, year, month, day_of_the_month, week_day_number, week_day_name, yearly_week_number,
-month_start_date_flag, month_end_date_flag, year_start_date_flag, year_end_date_flag, holiday_flag)
-values(202403, 2024, 6, 22, 6, 'Sunday', 52, 'false', 'true', 'false', 'true', 'true'); 
+-- insert into DATE_DIM(date_id, year, month, day_of_the_month, week_day_number, week_day_name, yearly_week_number,
+-- month_start_date_flag, month_end_date_flag, year_start_date_flag, year_end_date_flag, holiday_flag)
+-- values(202403, 2024, 6, 22, 6, 'Sunday', 52, 'false', 'true', 'false', 'true', 'true'); 
 
-insert into DATE_DIM(date_id, calendar_date, year, month, day_of_the_month, week_day_number, week_day_name, yearly_week_number,
-month_start_date_flag, month_end_date_flag, year_start_date_flag, year_end_date_flag, holiday_flag)
-values(202501, '2025-01-01', 2024, 6, 22, 6, 'Sunday', 52, 'false', 'true', 'false', 'true', 'true'); 
+-- insert into DATE_DIM(date_id, calendar_date, year, month, day_of_the_month, week_day_number, week_day_name, yearly_week_number,
+-- month_start_date_flag, month_end_date_flag, year_start_date_flag, year_end_date_flag, holiday_flag)
+-- values(202501, '2025-01-01', 2024, 6, 22, 6, 'Sunday', 52, 'false', 'true', 'false', 'true', 'true'); 
 
 --select * from date_dim;
 

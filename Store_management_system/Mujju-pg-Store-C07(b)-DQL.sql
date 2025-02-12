@@ -114,6 +114,7 @@ inner join Inventory b using(store_id)
 order by store_id;
 
 --2) Out-of-Stock Products: Write a query to list products that are out of stock at any store.
+select * from inventory;
 select e.store_name, a.quantity_in_stock from inventory a 
 inner join product b using(product_id)
 inner join order_product c using(product_id)
@@ -127,7 +128,7 @@ inner join supplier b using(supplier_id)
 inner join product c ON b.product_id=c.product_id
 inner join order_product d ON c.product_id=d.product_id
 inner join orders e using(order_id)
-inner join store f ON e.store_id=f.store_id
+inner join store f ON e.store_id=f.store_id;
 
 --------------------------------------Key Visuals and Corresponding SQL Queries:------------------------------------
 --Note: All dashboard queries must work against current month or current year filters
@@ -138,7 +139,7 @@ inner join store f ON e.store_id=f.store_id
 --select * from product
 select category, count(*) as Number_of_products from product
 group by category
-order by Number_of_products desc
+order by Number_of_products desc;
 
 --Bar Chart - Orders by Month
 --Query: Write a query that retrieves the number of orders placed in each month from the `ORDER` table, grouped by order date (by month).
@@ -148,7 +149,7 @@ select EXTRACT(year FROM order_date) as Year,EXTRACT(MONTH FROM order_date) as M
 group by order_date
 order by month;
 
-select * from orders;
+-- select * from orders;
 --Multi Line Graph - Sales vs Collection Over Month
 
 --Query: Write a query to compare total sales amounts (from the `ORDER` table) and collections (from the `PAYMENT` table) for each month.
@@ -167,7 +168,7 @@ order by order_month, payment_month;
 --showing customer names, order dates, and total amounts.
 --Columns: Customer Name, Order Date, Total Amount.
 select first_name||' '||last_name as customer_name, b.order_date, b.total_amount from customer a
-inner join orders b using(customer_id)
+inner join orders b using(customer_id);
 
 
 --Gauge - Total Store Inventory
