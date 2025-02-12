@@ -1,7 +1,6 @@
 -- 2)Stored Procedure for Customer Management
 -- Create a stored procedure to insert customer information for the Customer Management screen.
 
---select * from customer
 
 create or replace procedure scrop_dml_insert_customer(
 	In iparam_first_name varchar,
@@ -26,5 +25,6 @@ BEGIN
 END;
 $$;
 
---call scrop_dml_insert_customer
-('DR','Kefaya','F','passport','Q34554','dr.kef@tansycloud.com','234545645', 'kompally', 1);
+--call scrop_dml_insert_customer('DR','Kefaya','F','passport','Q34554','dr.kef@tansycloud.com','234545645', 'kompally', 1)
+
+--select * from customer;

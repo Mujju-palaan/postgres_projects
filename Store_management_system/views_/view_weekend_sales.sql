@@ -1,3 +1,4 @@
+
 -- 4) View for Weekend Sales
 --Create a view to showcase weekend sales analysis, highlighting the top ten products sold during the 
 --weekend along with details such as revenue, location, product name, and product category.
@@ -19,6 +20,9 @@ create or replace view view_weekend_sales AS
 	group by a.store_name, a.location, b.product_name, b.category,order_date
 	limit 10
 ;
+
+
+--select * from view_weekend_sales;
 
 --select extract(week from cast(order_date as date)) from orders;
 

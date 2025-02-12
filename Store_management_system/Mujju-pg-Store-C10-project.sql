@@ -53,7 +53,7 @@ $$ language plpgsql;
 ---------------------------------------------------------------------------------------------------------------------------------------
 -- 2)Stored Procedure for Customer Management
 -- Create a stored procedure to insert customer information for the Customer Management screen.
---select * from customer
+
 
 create or replace procedure scrop_dml_insert_customer(
 	In iparam_first_name varchar,
@@ -80,10 +80,10 @@ $$;
 
 --call scrop_dml_insert_customer('DR','Kefaya','F','passport','Q34554','dr.kef@tansycloud.com','234545645', 'kompally', 1)
 
+--select * from customer;
 ---------------------------------------------------------------------------------------------------------------------------------------
 -- 3)Stored Procedure for Product Management
 -- Create a stored procedure to update product information for the Product Management screen.
---select * from product;
 	
 create or replace procedure scrop_dml_update_product(
 	IN iparam_product_id int,
@@ -101,13 +101,11 @@ $$;
 
 --call scrop_dml_update_product(17,6.99);
 
+--select * from product;
 ---------------------------------------------------------------------------------------------------------------------------------------
 -- 4)Stored Procedure for Order Management
 -- Write a stored procedure to create a new order. This procedure should insert data into 
 -- the ORDER and ORDER_PRODUCT tables while updating the INVENTORY table to deduct the available stock accordingly.
--- select * from orders;
--- select * from order_product;
--- select * from inventory;
 
 -- drop procedure if exists scrop_insert_order_orderProduct_update_inventoryStock;
 
@@ -127,6 +125,7 @@ language plpgsql
 as $$
 DECLARE last_order_id INT;
 		available_stock int;
+		updated_stock int;
 
 BEGIN
 	
@@ -148,7 +147,7 @@ BEGIN
 	----last_order_id ye likhee jab se error aara
 	
 	-----validate
-	select quantity_in_stock into available_stock
+	select quantity_in_stock::int into available_stock
 	from INVENTORY
 	where product_id = iparam_product_id;
 	
@@ -160,7 +159,11 @@ BEGIN
 	END IF;
 	
 	----updating the INVENTORY table to deduct the available stock accordingly.
-	update INVENTORY set quantity_in_stock = quantity_in_stock - iparam_units
+	select  (quantity_in_stock::int - iparam_units)
+	into updated_stock from INVENTORY
+	where product_id = iparam_product_id;
+	
+	update INVENTORY set quantity_in_stock = updated_stock::varchar
 	where product_id = iparam_product_id;
 
 END;
@@ -172,7 +175,7 @@ $$;
     --SET last_order_id = LAST_order_id();
 ---- 2)insted of hard coding total_amount, it should automatic calculate (Units*price) ?????
 
---CALL scrop_insert_order_orderproduct_update_inventorystock(
+CALL scrop_insert_order_orderproduct_update_inventorystock(
 	'2025-03-02',	--<IN iparam_order_date date>,
 	500,			--<IN iparam_total_amount  numeric>,
 	'16:00:00',		--<IN iparam_delivered_duration  time without time zone>,
@@ -185,13 +188,14 @@ $$;
 	100				--<IN iparam_unit_rate  numeric>
 );
 
+-- select * from orders;
+-- select * from order_product;
+-- select * from inventory;
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 -- 5)Stored Procedure for Payment Insertion
 -- Write a stored procedure to insert new payment information for an order in the Payment Management screen. 
 --Also update order status as piad in order table.
--- select * from payment;
--- select * from orders;
 
 create or replace procedure scrop_payment_Insertion(
 	IN iparam_payment_date date,
@@ -213,7 +217,8 @@ END;
 $$;
 
 --call scrop_payment_Insertion('2025-02-02', 50, 3);
-
+-- select * from payment;
+-- select * from orders;
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 -- 6)Stored Procedure for Customer Analysis
@@ -346,18 +351,19 @@ create view view_store_details as
 -- select * from product;
 -- select * from orders;
 
+--drop view view_order_details
 create or replace view view_order_details as 
 	select a.first_name||' '||a.last_name as customer_name,
 			b.order_date, 
 			b.total_amount,
 			count(c.order_product_id),
-			d.product_name		
+			STRING_AGG(distinct d.product_name, ', ') AS pproduct_array
 	from customer a
 	inner join orders b using(customer_id)
 	inner join order_product c using(order_id)
 	inner join product d using(product_id)
 	group by a.first_name||' '||a.last_name,
-			b.order_date, b.total_amount, d.product_name,order_product_id
+			b.order_date, b.total_amount
 ;
 --select * from view_order_details;
 
@@ -396,6 +402,9 @@ create or replace view view_weekend_sales AS
 	group by a.store_name, a.location, b.product_name, b.category,order_date
 	limit 10
 ;
+
+
+--select * from view_weekend_sales;
 
 --select extract(week from cast(order_date as date)) from orders;
 
@@ -462,8 +471,7 @@ language plpgsql;
 --1) Trigger on Order Total Amount Change
 --Create a trigger on the ORDER table that logs any changes made to the total_amount field into the AUDIT_LOG table.
 --Ensure it captures the order_id, old_total, new_total, and log_date.
-select * from orders;
-select * from AUDIT_ORDER_LOG;
+--select * from orders;
 
 ---cteate tbl
 create table AUDIT_ORDER_LOG(
@@ -494,11 +502,12 @@ create trigger trg_update_total_amount
 AFTER update on orders
 for each row 
 WHEN(OLD.total_amount is distinct from new.total_amount)
-EXECUTE FUNCTION FUN_trg_update_total_amount();
+EXECUTE FUNCTION TRG_FUN_trg_update_total_amount();
 
 -----updating orders tbl
 update orders set total_amount = 100
-where order_id = 2;
+where order_id = 3;
+--select * from AUDIT_ORDER_LOG;
 
 
 --Submission Guidelines:

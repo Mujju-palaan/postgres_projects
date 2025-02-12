@@ -1,7 +1,5 @@
 -- 3)Stored Procedure for Product Management
 -- Create a stored procedure to update product information for the Product Management screen.
-
---select * from product;
 	
 create or replace procedure scrop_dml_update_product(
 	IN iparam_product_id int,
@@ -18,3 +16,5 @@ END;
 $$;
 
 --call scrop_dml_update_product(17,6.99);
+
+--select * from product;

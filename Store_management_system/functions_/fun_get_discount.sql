@@ -1,4 +1,3 @@
-
 -- 2) Function to Get Available Discounts
 --Write a function that retrieves active discount codes based on current date.
 --select * from Discount
@@ -26,3 +25,4 @@ language plpgsql;
 -- select discount_code 
 -- 	from Discount
 -- 	where (SELECT DATE(created_at)) =  '2025-01-18';
+

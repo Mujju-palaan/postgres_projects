@@ -1,4 +1,4 @@
---DQL ASSIGNMENT3 - MS SQL Logic for Dashboard Reporting in a Store Management System
+--DQL ASSIGNMENT3 - Dashboard Reporting in a Store Management System
 
 --1. Product Overview
 --Task: Write SQL queries to generate the following metrics:
@@ -114,18 +114,21 @@ inner join Inventory b using(store_id)
 order by store_id;
 
 --2) Out-of-Stock Products: Write a query to list products that are out of stock at any store.
-select * from inventory;
-select e.store_name, a.quantity_in_stock from inventory a 
+--select * from inventory; , select * from store;, select * from product;
+select e.store_name, a.quantity_in_stock, product_id 
+from inventory a 
 inner join product b using(product_id)
-inner join order_product c using(product_id)
-inner join orders d using(order_id)
-inner join store e ON d.store_id=e.store_id
-where a.quantity_in_stock <= 0;
+-- inner join order_product c using(product_id)
+-- inner join orders d using(order_id)
+inner join store e ON a.store_id=e.store_id
+where a.quantity_in_stock <= '150';
 
 --3) Inventory by Supplier: Write a query that lists the quantity of products supplied by each supplier to all stores.
-select b.supplier_name,f.store_name ,c.product_name, a.quantity_in_stock from inventory a
-inner join supplier b using(supplier_id)
-inner join product c ON b.product_id=c.product_id
+select b.supplier_name,f.store_name ,c.product_name, a.quantity_in_stock 
+from inventory a
+inner join supplier_product bb using(product_id)
+inner join supplier b ON bb.supplier_id=b.supplier_id
+inner join product c ON bb.product_id=c.product_id
 inner join order_product d ON c.product_id=d.product_id
 inner join orders e using(order_id)
 inner join store f ON e.store_id=f.store_id;
@@ -174,7 +177,8 @@ inner join orders b using(customer_id);
 --Gauge - Total Store Inventory
 --Query: Write an SQL query to calculate the total quantity of products in stock across all stores from the `INVENTORY` table.
 --Display: Total quantity of products available.
-select store_name, sum(b.quantity_in_stock) as stock from store a
+select store_name, sum(b.quantity_in_stock::int) as stock 
+from store a
 inner join inventory b using(store_id)
 group by store_name
 order by stock desc;

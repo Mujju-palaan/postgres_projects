@@ -9,3 +9,6 @@ create view view_inventory_overview AS
 	;
 
 --select * from view_inventory_overview;
+
+
+-- 4) View for Weekend Sales

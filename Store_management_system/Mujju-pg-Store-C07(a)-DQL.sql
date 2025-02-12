@@ -148,10 +148,12 @@ select a.order_id,a.order_date,a.total_amount,a.order_id,b.first_name ||' ' || b
 inner join customer b ON a.customer_id=b.customer_id;
 
 --b) Select all products and their corresponding suppliers using INNER JOIN between PRODUCT and SUPPLIER.
---select * from supplier;
+--select * from supplier_product;
 
-select a.product_id,a.product_name, a.category, a.price, b.supplier_name, b.supplier_id from product a
-inner join supplier b ON a.product_id=b.product_id;
+select a.product_id,a.product_name, a.category, a.price, c.supplier_name, c.supplier_id 
+from product a
+inner join supplier_product b ON a.product_id=b.product_id
+inner join supplier c ON b.supplier_id=c.supplier_id;
 
 --c) Select all payments and the corresponding order details using INNER JOIN between PAYMENT and ORDER.
 --select * from orders;
@@ -175,8 +177,10 @@ from customer a
 left join orders b On a.customer_id = b.customer_id;
 
 --b) Select all products and their suppliers using LEFT JOIN, including products without suppliers.
-select a.product_id, a.product_name, a.category, a.price, b.supplier_id, b.supplier_name from product a
-left join supplier b ON a.product_id = b.product_id
+select a.product_id, a.product_name, a.category, a.price, c.supplier_id, c.supplier_name 
+from product a
+left join supplier_product b ON a.product_id=b.product_id
+left join supplier c ON b.supplier_id=c.supplier_id
 order by price desc;
 
 --c) Select all employees and the stores they work at using LEFT JOIN, including employees without a store assignment.
@@ -287,7 +291,7 @@ select * from customer a
 --c) Select all products where a supplier exists in the SUPPLIER table using EXISTS.
 select * from product a
 	where exists(
-		select * from supplier b
+		select * from supplier_product b
 		where a.product_id = b.product_id
 	);
 --d) Select all employees where no payments were processed using NOT EXISTS.
@@ -547,7 +551,8 @@ select * from store a
 --d) Select all suppliers where no products exist using NOT EXISTS.
 select * from supplier a
 	where not exists(
-		select * from product b
+		select * from supplier_product a
+			inner join product b using(product_id)
 			where a.product_id = b.product_id
 	);
 
@@ -558,9 +563,10 @@ select concat(first_name,' ',last_name) as name, order_status from customer a
 	ON a.customer_id = b.customer_id;
 	
 --b) Select all products and their corresponding suppliers using INNER JOIN between PRODUCT and SUPPLIER.
-select a.product_name,a.category,a.price,b.supplier_name from product a
-	inner join supplier b
-	ON a.product_id = b.product_id;
+select a.product_name,a.category,a.price,c.supplier_name from product a
+	inner join supplier_product b ON a.product_id = b.product_id
+	inner join supplier c ON b.supplier_id = c.supplier_id;
+	
 --c) Select all employees and the stores they work at using LEFT JOIN between EMPLOYEE and STORE.
 select first_name||' '||last_name as name, salary, store_name, location from employee a
 	left join store b

@@ -2,9 +2,6 @@
 -- Write a stored procedure to insert new payment information for an order in the Payment Management screen. 
 --Also update order status as piad in order table.
 
--- select * from payment;
--- select * from orders;
-
 create or replace procedure scrop_payment_Insertion(
 	IN iparam_payment_date date,
 	IN iparam_amount_paid numeric,
@@ -25,4 +22,5 @@ END;
 $$;
 
 --call scrop_payment_Insertion('2025-02-02', 50, 3);
-
+-- select * from payment;
+-- select * from orders;

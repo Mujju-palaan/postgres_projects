@@ -1,9 +1,6 @@
 -- 4)Stored Procedure for Order Management
 -- Write a stored procedure to create a new order. This procedure should insert data into 
 -- the ORDER and ORDER_PRODUCT tables while updating the INVENTORY table to deduct the available stock accordingly.
--- select * from orders;
--- select * from order_product;
--- select * from inventory;
 
 -- drop procedure if exists scrop_insert_order_orderProduct_update_inventoryStock;
 
@@ -23,6 +20,7 @@ language plpgsql
 as $$
 DECLARE last_order_id INT;
 		available_stock int;
+		updated_stock int;
 
 BEGIN
 	
@@ -43,17 +41,25 @@ BEGIN
 	(last_order_id, iparam_product_id,iparam_units, iparam_unit_rate, iparam_total_amount);
 	----last_order_id ye likhee jab se error aara
 	
-	----updating the INVENTORY table to deduct the available stock accordingly.
-	update INVENTORY set quantity_in_stock = quantity_in_stock - iparam_units
+	-----validate
+	select quantity_in_stock::int into available_stock
+	from INVENTORY
 	where product_id = iparam_product_id;
-
-	-- Validate inventory stock
-   --      IF available_stock IS NULL THEN
-   --          RAISE EXCEPTION 'Product ID % not found in inventory', iparam_product_id;
-   --      ELSIF available_stock < iparam_units THEN
-   --          RAISE EXCEPTION 'Not enough stock for product ID %. Available: %, Required: %'
-			-- , iparam_product_id, available_stock, iparam_units;
-   --      END IF;
+	
+	IF available_stock IS NULL THEN
+	RAISE EXCEPTION 'Product ID % not found in inventory', iparam_product_id;
+	ELSIF available_stock < iparam_units THEN
+		RAISE EXCEPTION 'Not enough stock for product ID %. Available: %, Required: %'
+		, iparam_product_id, available_stock, iparam_units;
+	END IF;
+	
+	----updating the INVENTORY table to deduct the available stock accordingly.
+	select  (quantity_in_stock::int - iparam_units)
+	into updated_stock from INVENTORY
+	where product_id = iparam_product_id;
+	
+	update INVENTORY set quantity_in_stock = updated_stock::varchar
+	where product_id = iparam_product_id;
 
 END;
 $$;
@@ -64,7 +70,7 @@ $$;
     --SET last_order_id = LAST_order_id();
 ---- 2)insted of hard coding total_amount, it should automatic calculate (Units*price) ?????
 
---CALL scrop_insert_order_orderproduct_update_inventorystock(
+CALL scrop_insert_order_orderproduct_update_inventorystock(
 	'2025-03-02',	--<IN iparam_order_date date>,
 	500,			--<IN iparam_total_amount  numeric>,
 	'16:00:00',		--<IN iparam_delivered_duration  time without time zone>,
@@ -77,3 +83,6 @@ $$;
 	100				--<IN iparam_unit_rate  numeric>
 );
 
+-- select * from orders;
+-- select * from order_product;
+-- select * from inventory;
