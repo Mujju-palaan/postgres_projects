@@ -198,31 +198,31 @@ DO UPDATE SET phone_number = EXCLUDED.phone_number;
 --year_end_date_flag, holiday_flag
 --The date_id should be populated in the YYYYMM format (e.g., 202401).
 --Populate the DATE_DIM table with data for current year and the next year.
--- Create table DATE_DIM (
---     date_id int unique NOT NULL PRIMARY KEY, -- YYYYMM
---     calendar_date DATE default current_date NOT NULL,                       
---     year INT NOT NULL,
---     month INT check(month in (1,2,3,4,5,6,7,8,9,10,11,12)) NOT NULL,
---     day_of_the_month INT check(day_of_the_month >= 1 AND day_of_the_month <=31) NOT NULL,                    
---     week_day_number INT check(week_day_number >= 1 AND week_day_number <=7) NOT NULL,
---     week_day_name VARCHAR(9) 
---     check(week_day_name in ('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday')) NOT NULL,
---     yearly_week_number INT check(yearly_week_number >= 1 AND yearly_week_number <=53) NOT NULL,
---     month_start_date_flag BOOLEAN NOT NULL,
---     month_end_date_flag BOOLEAN NOT NULL,
---     year_start_date_flag BOOLEAN NOT NULL,
---     year_end_date_flag BOOLEAN NOT NULL,
---     holiday_flag BOOLEAN NOT NULL
--- );
+Create table DATE_DIM (
+    date_id int unique NOT NULL PRIMARY KEY, -- YYYYMM
+    calendar_date DATE default current_date NOT NULL,                       
+    year INT NOT NULL,
+    month INT check(month in (1,2,3,4,5,6,7,8,9,10,11,12)) NOT NULL,
+    day_of_the_month INT check(day_of_the_month >= 1 AND day_of_the_month <=31) NOT NULL,                    
+    week_day_number INT check(week_day_number >= 1 AND week_day_number <=7) NOT NULL,
+    week_day_name VARCHAR(9) 
+    check(week_day_name in ('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday')) NOT NULL,
+    yearly_week_number INT check(yearly_week_number >= 1 AND yearly_week_number <=53) NOT NULL,
+    month_start_date_flag BOOLEAN NOT NULL,
+    month_end_date_flag BOOLEAN NOT NULL,
+    year_start_date_flag BOOLEAN NOT NULL,
+    year_end_date_flag BOOLEAN NOT NULL,
+    holiday_flag BOOLEAN NOT NULL
+);
 
--- insert into DATE_DIM(date_id, year, month, day_of_the_month, week_day_number, week_day_name, yearly_week_number,
--- month_start_date_flag, month_end_date_flag, year_start_date_flag, year_end_date_flag, holiday_flag)
--- values(202403, 2024, 6, 22, 6, 'Sunday', 52, 'false', 'true', 'false', 'true', 'true'); 
+insert into DATE_DIM(date_id, year, month, day_of_the_month, week_day_number, week_day_name, yearly_week_number,
+month_start_date_flag, month_end_date_flag, year_start_date_flag, year_end_date_flag, holiday_flag)
+values(202403, 2024, 6, 22, 6, 'Sunday', 52, 'false', 'true', 'false', 'true', 'true'); 
 
--- insert into DATE_DIM(date_id, calendar_date, year, month, day_of_the_month, week_day_number, week_day_name, yearly_week_number,
--- month_start_date_flag, month_end_date_flag, year_start_date_flag, year_end_date_flag, holiday_flag)
--- values(202501, '2025-01-01', 2024, 6, 22, 6, 'Sunday', 52, 'false', 'true', 'false', 'true', 'true'); 
+insert into DATE_DIM(date_id, calendar_date, year, month, day_of_the_month, week_day_number, week_day_name, yearly_week_number,
+month_start_date_flag, month_end_date_flag, year_start_date_flag, year_end_date_flag, holiday_flag)
+values(202501, '2025-01-01', 2024, 6, 22, 6, 'Sunday', 52, 'false', 'true', 'false', 'true', 'true'); 
 
--- --select * from date_dim;
+--select * from date_dim;
 
 ---GOOD LUCK WITH YOUR ASSIGNMENT!!!

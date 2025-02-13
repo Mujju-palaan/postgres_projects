@@ -337,67 +337,106 @@ select
 -- Use NULLIF to compare treatment_start_date and appointment_date in the PATIENT_ADMIT table 
 --and return NULL if they are the same.
 select b.patient_id, a.appointment_date, c.treatment_start_date,
-	NULLIF (c.treatment_start_date, a.appointment_date) AS adjusted_treatment_start_date
+	NULLIF (c.treatment_start_date, a.appointment_date) AS adjusted_treatment_start_date 
+	---If treatment_start_date = appointment_date, it returns NULL.
 	from appointment a
 	inner join patient b using(patient_id)
 	inner join patient_admission c ON b.patient_id=c.patient_id
 ;
 -- Select all nurses and replace null hire_date with 'Unknown' using COALESCE.
+select nurse_id, coalesce(hire_date::varchar, 'Unknown') from nurse;
 
 
 -- 18. STRING Functions
 -- Select all patients' first_name in uppercase using the UPPER() function.
+select upper(first_name) from patient;
 
 -- Select all doctors' specialization in lowercase using the LOWER() function.
+select lower(specialization) from doctor;
 
 -- Use CONCAT() to combine the first_name and last_name of doctors.
+select concat(first_name,' ', last_name) from doctor;
+select first_name||' '||last_name from doctor;
 
 -- Select all patients' last_name and find the length of the name using LENGTH().
+select length(last_name) from doctor;
 
 -- 19. DATE Functions
 -- Select all patients and show their date_of_birth formatted as 'YYYY-MM-DD' using TO_CHAR().
+select to_char(date_of_birth, 'YYYYMMDD') from patient;
 
 -- Add 1 year to all appointment_date values in the APPOINTMENT table using AGE().
+--select * from appointment;
+update APPOINTMENT set appointment_date = appointment_date + interval '1 year'
+where appointment_id = 12
+;
 
 -- Subtract 1 month from all treatment_start_date values using INTERVAL.
+update APPOINTMENT set appointment_date = appointment_date - interval '1 year'
+where appointment_id = 12
+;
 
 -- Select all nurses and extract the year from their hire_date using EXTRACT().
+select nurse_id, extract(year from hire_date) from nurse;
+
 
 -- 20. NUMERIC Functions
 -- Select the dosage from the MEDICATION table and round it to the nearest integer using ROUND().
+select dosage from MEDICATION;
+SELECT ROUND( 10.81 );
 
 -- Select all total_amount from the BILLING table and use CEIL() to round up.
+select CEIL(total_amount) from billing;
 
 -- Use FLOOR() to round down the total_amount in the BILLING table.
+select FLOOR(total_amount) from billing;
 
 -- Select the highest total_amount from the BILLING table using MAX().
+select MAX(total_amount) from billing;
+
 
 -- 21. CAST and CONVERT Command
 -- Select all patients and cast the patient_id as a string using CAST().
+select patient_id::char from patient;
 
 -- Convert total_amount in the BILLING table to DECIMAL using CONVERT().
+select total_amount::decimal from billing;
 
 -- Cast treatment_id in the TREATMENT table to INTEGER.
+select admission_id::int from patient_admission;
 
 -- Convert the appointment_date from the APPOINTMENT table into TEXT.
+select appointment_date::text from appointment;
 
 -- 22. CONCAT and CONCAT_WS Functions
 -- Use CONCAT() to join first_name and last_name with a space in between in the DOCTOR table.
+select first_name||' '||last_name from doctor;
 
 -- Use CONCAT_WS() to combine the department_name and location with a comma in the DEPARTMENT table.
+select CONCAT_WS(' , ',department_name,location) from DEPARTMENT;
 
 -- Use CONCAT() to combine the room_number and room_type from the ROOM table.
+select room_number||' '||room_type from room;
 
 -- Use CONCAT_WS() to combine first_name, last_name, and email from the PATIENT table.
+select CONCAT_WS(' , ',first_name,last_name,email) from patient;
 
 -- 23. LIKE and NOT LIKE
 -- Select patients whose email ends with 'hospital.com' using LIKE.
+select email from patient
+where email LIKE '%hospital.com'
 
 -- Select doctors where specialization contains 'Surgery' using LIKE.
+select specialization from doctor
+where specialization LIKE 'Surgery';
 
 -- Select patients whose last_name does not start with 'J' using NOT LIKE.
+select last_name from patient
+where last_name NOT LIKE 'J%';
 
 -- Select departments where department_name contains 'Oncology' using LIKE.
+select department_name from department
+where department_name LIKE 'Oncology';
 
 -- 24. EXISTS and NOT EXISTS
 -- Select doctors where appointments exist in the APPOINTMENT table using EXISTS.
@@ -410,48 +449,103 @@ select b.patient_id, a.appointment_date, c.treatment_start_date,
 
 -- 25. JOIN Commands
 -- Select all patients and their corresponding appointments using INNER JOIN between the PATIENT and APPOINTMENT tables.
+select a.first_name||' '||a.last_name as patient_name, a.phone_number,
+		b.appointment_date, b.appointment_time, b.status
+from patient a
+inner join appointment b using(patient_id)
+;
 
 -- Select all prescriptions and their corresponding medications using INNER JOIN between PRESCRIPTION and MEDICATION.
+select * 
+from prescription a
+inner join MEDICATION b using(medication_id)
+;
 
 -- Select all nurses and their assigned departments using LEFT JOIN between NURSE and DEPARTMENT.
+select * 
+from nurse a
+inner join appointment b ON a.nurse_id=b.incharge_nurse_id
+inner join doctor_department c using(doctor_id)
+inner join department d using(department_id)
+;
 
 -- Select all treatments and their corresponding doctors using INNER JOIN between TREATMENT and DOCTOR.
+select *
+from patient_admission
+inner join appointment b using(admission_id)
+inner join doctor c using(doctor_id)
+;
 
 -- 26. BETWEEN Command
 -- Select all appointments where the appointment_date is between '2023-01-01' and '2023-12-31'.
+select * from appointment
+where appointment_date between '2023-01-01' and '2023-12-31';
 
 -- Select all treatments where the treatment_date is between '2022-01-01' and '2022-12-31'.
+select * from patient_admission
+where treatment_start_date between '2022-01-01' and '2022-12-31';
 
 -- Select all patients where the date_of_birth is between '1960-01-01' and '2000-12-31'.
+select * from patient
+where date_of_birth between '1960-01-01' and '2000-12-31';
 
 -- Select all rooms where the capacity is between 2 and 10.
+					
 
 -- 27. IN and NOT IN Command
 -- Select all patients where the patient_id is in (1, 2, 3).
+select * from patient
+where patient_id in (1, 2, 3);
 
 -- Select all doctors where the specialization is in ('Cardiology', 'Oncology').
+select * from doctor 
+where specialization in ('Cardiology', 'Oncology');
 
 -- Select all appointments where the status is not in ('Cancelled', 'No Show').
+select * from appointment
+where status in ('Cancelled', 'No Show');
 
 -- Select all departments where the department_id is in (1, 2, 5).
+select * from department
+where department_id in (1, 2, 5);
 
 -- 28. UNION Command
 -- Select patients from PATIENT and HOSPITAL_PATIENT using UNION.
 
 -- Select doctors from two different departments using UNION.
+select * from doctor_department
+where department_id = 1
+
+UNION
+
+select * from doctor_department
+where department_id = 2;
 
 -- Use UNION to combine appointments from two different years.
+select * from appointment
+where extract(year from appointment_date) = '2025'
+
+UNION
+
+select * from appointment
+where extract(year from appointment_date) = '2026'
+
 
 -- Use UNION ALL to combine treatments from multiple departments.
 
 -- 29. ARRAY Command
 -- Select all specialization and convert it into an array using ARRAY_AGG().
+select STRING_AGG(specialization,',')
+from doctor;
 
 -- Use UNNEST() to expand arrays from the DEPARTMENT table.
 
--- Convert patient names into an array using ARRAY_AGG().
 
--- Use ARRAY functions to select and manipulate data from the TREATMENT table.
+-- Convert patient names into an array using ARRAY_AGG().
+select STRING_AGG(first_name||' '||last_name,',') as patient_names_array
+from patient;
+
+-- Use ARRAY functions to select and manipulate data from the patient table.
 
 
 -- GOOD LUCK WITH YOUR ASSIGNMENT!!!
