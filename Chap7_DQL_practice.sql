@@ -1,3 +1,5 @@
+-- Mujju-pg-Bank-C07(a)-DQL 
+
 --DQL practice
 SELECT CONCAT(UPPER(first_name), ' ', LOWER(last_name)) AS full_name
 FROM customer;
