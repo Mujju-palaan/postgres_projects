@@ -3,14 +3,42 @@
 -- Chapter 10 - Projects
 -- Final Capstone Project 1: Banking System in PostgreSQL
 
-
 -- Assignment Tasks:
 -- Stored Procedure Tasks:
 
 -- 1)Stored Procedure for Employee Information
 -- Write a stored procedure that retrieves all rows from the EMPLOYEE table where the city is a specific value passed as a input parameter.
 
+--drop function fun_get_employee_details;
 
+create or replace function fun_get_employee_details(iparam_city_id int)
+returns table(
+	iparam_employee_id int
+	,iparam_employee_name text
+	,iparam_hire_date date
+	,iparam_salary numeric
+	,iparam_branch_id int
+	,iparam_city_name varchar
+)
+language plpgsql
+as $$
+
+BEGIN
+	return query
+	select a.employee_id
+			,a.first_name||' '||a.last_name as employee_name
+			,a.hire_date
+			,a.salary
+			,a.branch_id
+			,b.city_name
+	from employee a
+	inner join city b using(city_id)
+	where b.city_id = iparam_city_id;
+
+END;
+$$;
+
+--select * from fun_get_employee_details(1);
 
 
 -- ------------------------------------------------------------------------------------------------------------
@@ -19,8 +47,23 @@
 -- Write a stored procedure to insert a new record into the CITY table. The procedure should take country_name 
 --and city_name as input parameters.
 
+create or replace procedure scrop_insert_city_dml(
+	IN iparam_country_name varchar
+	,IN iparam_city_name varchar
+)
+language plpgsql
+as $$
 
+BEGIN
+	--insert (select * from city)
+	insert into city(country_name, city_name)
+	values(iparam_country_name,iparam_city_name)
+	;
 
+END;
+$$;
+
+--call scrop_insert_city_dml('India','Hyderabad');
 
 -- ------------------------------------------------------------------------------------------------------------
 
@@ -28,8 +71,25 @@
 -- Write a stored procedure to update the salary of a specific EMPLOYEE by adding a updated salary. 
 --The procedure should take employee_id and new salary as parameters.
 
+--drop procedure scrop_update_salary;
 
+create or replace procedure scrop_update_salary(
+	IN iparam_employee_id int
+	,IN iparam_salary numeric
+)
+language plpgsql
+as $$
 
+BEGIN
+	---update (select * from employee)
+	update employee set salary = iparam_salary
+	where employee_id = iparam_employee_id
+	;
+
+END;
+$$;
+
+--call scrop_update_salary(1, 55000);
 -- ------------------------------------------------------------------------------------------------------------
 
 -- 4)Stored Procedure for Salary Management version 2
@@ -37,9 +97,42 @@
 --The procedure should also accept the salary increase percentage as an input parameter. Utilize JSON, XML, or SQL 
 --table variables to manage and process multiple employee records. Temporary tables can be used if required. 
 --Input parameters: employee_ids and increase_percent.
+create or replace fun fun_salary_management(
+	IN iparam_employee_ids json
+	,IN iparam_increase_percent
+)
+Declare 
+		d_salary numeric;
+		d_updated_salary numeric;
+		
+as $$
 
+BEGIN
+	---temp tbl
+	create temp table temp_salary_management(
+		employee_id int
+		,salary numeric
+	);
+	
+	---ids
+	SELECT CAST(value AS INTEGER) AS emp_id FROM jsonb_array_elements_text(iparam_employee_ids::jsonb);
 
+	--select
+	select salary
+	into d_salary
+	from employee
+	where employee_id = iparam_employee_ids;
 
+	--calculate
+	d_salary * iparam_increase_percent = d_updated_salary
+	
+	--insert
+	insert into temp_salary_management(employee_id, salary)
+	values(iparam_employee_ids, d_updated_salary)
+
+END;
+$$
+language plpgsql;
 
 
 -- ------------------------------------------------------------------------------------------------------------
@@ -125,16 +218,38 @@
 -- 1)View for Customer Information
 -- Create a db view that retrieves the first_name, last_name, email, and phone_number of all customers along with 
 --their corresponding city names.
+create view view_customer_info as
+	select first_name
+		,last_name
+		,email
+		,phone_number
+		,city_name
+	from customer
+	inner join city using(city_id)
+;
 
-
+--select * from view_customer_info;
 
 -- ------------------------------------------------------------------------------------------------------------
 -- 2)View for Account Details
 -- Create a database view that displays account details, customer_id, first_name, last_name, account_id, account_type, 
 --and balance. Include the city name and country name using appropriate joins.
 
+create or replace view customer_account_details as
+	select a.customer_id
+		,a.first_name
+		,a.last_name
+		,b.account_id
+		,b.account_type
+		,b.balance
+		,c.city_name
+		,c.country_name
+	from customer a
+	inner join account b using(customer_id)
+	inner join city c using(city_id)
+;
 
-
+--select * from customer_account_details;
 
 -- ------------------------------------------------------------------------------------------------------------
 
@@ -143,8 +258,25 @@
 --interest_rate, loan_start_date, and loan_end_date. Include the total number of instalments and the sum of all 
 --instalment amounts for each loan.
 
+create or replace view view_loan_details as
+	select b.loan_id
+			,a.customer_id
+			,a.first_name
+			,a.last_name
+			,b.loan_amount
+			,b.interest_rate
+			,b.loan_start_date
+			,b.loan_end_date
+			,count(c.instalment_id)
+			,sum(c.instalment_amount)
+	from customer a
+	inner join account aa using(customer_id)
+	inner join loan b using(account_id)
+	inner join loan_instalments c	using(loan_id)
+	group by b.loan_id ,a.customer_id
+;
 
-
+select * from view_loan_details;
 
 -- ------------------------------------------------------------------------------------------------------------
 
@@ -153,8 +285,38 @@
 -- Write a database function to calculate the total outstanding loan balance for a customer based on their loans. 
 --Use SQL variables within the function to implement this logic.
 
+drop function fun_loan_balance_per_customer;
 
+create or replace function fun_loan_balance_per_customer(iparam_customer_id int)
+returns table(
+	customer_id int
+	,customer_name text
+	,outstanding_amount numeric
+)
 
+as $$
+
+BEGIN
+	return query
+	select a.customer_id
+			,a.first_name||' '||a.last_name
+			,c.instalment_amount * (extract(month from b.loan_end_date) - extract(month from current_date))
+			-- ,instalment_amount
+			-- ,extract(month from loan_end_date) - extract(month from current_date)
+	from customer a
+	inner join account aa using(customer_id)
+	inner join loan b using(account_id)
+	inner join loan_instalments c using(loan_id)
+	where c.instalment_amount * (extract(month from b.loan_end_date) - extract(month from current_date)) > 0
+			AND
+			a.customer_id = iparam_customer_id
+	;
+
+END;
+$$
+language plpgsql;
+
+--select * from fun_loan_balance_per_customer(2);
 
 -- ------------------------------------------------------------------------------------------------------------
 
