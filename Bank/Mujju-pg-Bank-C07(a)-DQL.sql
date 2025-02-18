@@ -363,22 +363,73 @@ from employee
 -- 16. UNION and UNION ALL Command
 -- Select the transfer date, amount, and label the row as "Fund Transfer" from FUND_TRANSFER table. 
 --UNION these records with transaction data, using the transaction date, amount, and labeling them as "Transaction."
+-- select transfer_date, amount from FUND_TRANSFER
 
 -- Select all accounts from different branches using UNION ALL.
+select a.account_id, a.account_type, a.balance,
+		c.branch_id
+from account a
+join customer b using(customer_id)
+join branch c using(branch_id)
+where c.branch_id = 1
+
+UNION 
+
+select a.account_id, a.account_type, a.balance,
+		c.branch_id
+from account a
+join customer b using(customer_id)
+join branch c using(branch_id)
+where c.branch_id = 2
+;
 
 -- Use UNION to combine customers from two different branches.
+select a.first_name||' '||a.last_name as customer_name
+		,b.branch_name
+from customer a
+join branch b using(branch_id)
+where branch_id = 1
+
+UNION
+
+select a.first_name||' '||a.last_name as customer_name
+		,b.branch_name
+from customer a
+join branch b using(branch_id)
+where branch_id = 2
+;
 
 -- Use UNION ALL to select all transactions from two different years.
+select * from transaction
+where extract(year from transaction_date) = extract(year from current_date)
+
+UNION
+
+select * from transaction
+where extract(year from transaction_date) = extract(year from current_date) - 1
+;
 
 -------------------------------------------------------------
 -- 17. COALESCE, IFNULL, NULLIF Command
 -- Select all accounts and use COALESCE to replace null balances with 0.
+select account_id, account_type, 
+		coalesce(balance, 0) 
+from account
+;
 
 -- Use IFNULL to replace null phone_number values in the CUSTOMER table.
+select first_name||' '||last_name as customer_name
+		,coalesce(phone_number, 'No phone_number') 
+from customer;
 
--- Use NULLIF to list overdue loan payments from the LOAN_INSTALMENTS table by comparing the current system date, the loan due date, and the loan paid date.
+-- Use NULLIF to list overdue loan payments from the LOAN_INSTALMENTS table by comparing the current system date, 
+--the loan due date, and the loan paid date.
+
 
 -- Select all customers and use COALESCE to replace null email with 'Not Provided'.
+select first_name||' '||last_name as customer_name
+		,coalesce(email, 'Not Provided') 
+from customer; 
 
 -------------------------------------------------------------
 -- 18. STRING Functions
@@ -499,12 +550,26 @@ where branch_location LIKE 'Main'
 -------------------------------------------------------------
 -- 25. EXISTS and NOT EXISTS
 -- Select customers where accounts exist in the ACCOUNT table using EXISTS.
+select * from customer
+where EXISTS (select * from account)
+;
 
 -- Select loans where customers exist using EXISTS.
+select customer_id, loan_amount 
+from loan
+inner join account using(account_id)
+where EXISTS (select * from customer)
+;
 
 -- Select branches where no employees exist using NOT EXISTS.
+select branch_name from branch
+where not exists (select * from employee)
+;
 
 -- Select transactions where no matching account exists using NOT EXISTS.
+select * from transaction
+where not exists (select * from account)
+;
 
 -------------------------------------------------------------
 -- 26. JOIN Commands
