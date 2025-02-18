@@ -325,18 +325,29 @@ where (select count(employee_id) from employee) > 5
 -------------------------------------------------------------
 -- 14. RANK and DENSE_RANK Command
 -- Rank customers based on their balance using RANK().
-select a.customer_id, 
-		RANK() over(partition by b.balance)  rank
+select a.customer_id, b.balance,
+		RANK() over(order by b.balance) as rank
 from customer a
 join account b using(customer_id)
 -- order by customer_id
 ;
 
 -- Use DENSE_RANK() to rank accounts by their balance.
+select account_id, balance,
+		DENSE_RANK() over(order by balance desc) as rank
+from account;
 
 -- Rank transactions by the amount using RANK().
+select amount,
+		rank() over(order by amount)
+from transaction
+;
 
 -- Use DENSE_RANK() to rank employees by their salary.
+select employee_id, salary,
+		DENSE_RANK() over(order by salary)
+from employee
+;
 
 -------------------------------------------------------------
 -- 15. PIVOT and UNPIVOT
@@ -350,7 +361,8 @@ join account b using(customer_id)
 
 -------------------------------------------------------------
 -- 16. UNION and UNION ALL Command
--- Select the transfer date, amount, and label the row as "Fund Transfer" from FUND_TRANSFER table. UNION these records with transaction data, using the transaction date, amount, and labeling them as "Transaction."
+-- Select the transfer date, amount, and label the row as "Fund Transfer" from FUND_TRANSFER table. 
+--UNION these records with transaction data, using the transaction date, amount, and labeling them as "Transaction."
 
 -- Select all accounts from different branches using UNION ALL.
 
@@ -371,46 +383,77 @@ join account b using(customer_id)
 -------------------------------------------------------------
 -- 18. STRING Functions
 -- Select all customers' first_name in uppercase using the UPPER() function.
+select upper(first_name) from customer;
 
 -- Select all accounts' account_type in lowercase using the LOWER() function.
+select lower(account_type) from account;
 
 -- Use CONCAT() to combine the first_name and last_name of customers.
+select concat(first_name,' ',last_name) from customer;
+
+select first_name||' '||last_name from customer;
 
 -- Select all customers' last_name and find the length of the name using LENGTH().
+select length(last_name) from customer;
 
 -------------------------------------------------------------
 -- 19. DATE Functions
 -- Select all customers and show their loan_start_date formatted as 'Nov 2024' using TO_CHAR().
+select first_name||' '||last_name as customer_name
+		,to_char(loan_start_date, 'Mon yyyy')
+from customer
+join account using(customer_id)
+join loan using (account_id)
+;
 
 -- Add 1 year to all loan_start_date values in the LOAN table using AGE().
+select age(loan_start_date + interval '1 year') 
+from loan;
 
 -- Subtract 1 month from all transaction_date values using INTERVAL.
+select transaction_date - interval '1 month' from transaction;
 
 -- Select all accounts and extract the year from their transaction_date using EXTRACT().
+select a.account_id, a.balance
+		,EXTRACT(year from b.transaction_date)  as year
+from account a
+join transaction b using(account_id)
+;
 
 -------------------------------------------------------------
 -- 20. NUMERIC Functions
 -- Select the balance from the ACCOUNT table and round them to the nearest integer using ROUND().
+select ROUND(balance) from account;
 
 -- Select all loan_amount from the LOAN table and use CEIL() to round up.
+select CEIL(loan_amount) from LOAN;
 
 -- Use FLOOR() to round down the balance in the ACCOUNT table.
+select FLOOR(balance) from account;
 
 -- Select the highest balance from the ACCOUNT table using MAX().
+select max(balance) from account;
 
 -------------------------------------------------------------
 -- 21. CAST and CONVERT Command
 -- Select all customers and cast the customer_id as a string using CAST().
+select customer_id::char from customer;
 
 -- Convert balance in the ACCOUNT table to DECIMAL using CONVERT().
+-- select CONVERT(decimal, balance) from account;
 
 -- Cast transaction_id in the TRANSACTION table to INTEGER.
+select transaction_id::int from transaction;
 
 -- Convert the transaction_date from the TRANSACTION table into TEXT.
+select transaction_date::text from transaction;
 
 -------------------------------------------------------------
 -- 22. JSON Select
 -- Select all JSON data from a column in the CUSTOMER table if it stores any JSON details.
+-- SELECT customer_id, address
+-- FROM CUSTOMER
+-- WHERE jsonb_typeof(address::jsonb) IS NOT NULL;
 
 -- Select specific keys from a JSON column in the CUSTOMER table.
 
@@ -421,22 +464,37 @@ join account b using(customer_id)
 -------------------------------------------------------------
 -- 23. CONCAT and CONCAT_WS Functions
 -- Use CONCAT() to join first_name and last_name with a space in between in the CUSTOMER table.
+select first_name||' '||last_name from customer;
 
 -- Use CONCAT_WS() to combine the branch_name and branch_location with a comma in the BRANCH table.
+select CONCAT_WS(',',branch_name, branch_location) from branch;
 
 -- Use CONCAT() to combine the account_type and balance from the ACCOUNT table.
+select account_type||' ,'||balance from account;
 
 -- Use CONCAT_WS() to combine first_name, last_name, and email from the CUSTOMER table.
-
+select CONCAT_WS(', ',first_name, last_name, email ) from CUSTOMER;
 -------------------------------------------------------------
 -- 24. LIKE and NOT LIKE
 -- Select customers whose email ends with 'bank.com' using LIKE.
+select email from customer
+where email LIKE '%bank.com'
+;
 
 -- Select accounts where account_type contains 'credit' using LIKE.
+select account_type from account
+where account_type LIKE 'credit'
+;
 
 -- Select customers whose last_name does not start with 'J' using NOT LIKE.
+select last_name from customer
+where last_name not Like 'J%'
+;
 
 -- Select branches where branch_location contains 'Main' using LIKE.
+select branch_location from branch
+where branch_location LIKE 'Main'
+;
 
 -------------------------------------------------------------
 -- 25. EXISTS and NOT EXISTS
@@ -451,42 +509,96 @@ join account b using(customer_id)
 -------------------------------------------------------------
 -- 26. JOIN Commands
 -- Select all customers and their corresponding accounts using INNER JOIN between CUSTOMER and ACCOUNT.
+select * 
+from customer a
+inner join account b using(customer_id)
+;
 
 -- Select all accounts and their transactions using INNER JOIN between ACCOUNT and TRANSACTION.
+select *
+from account a
+inner join TRANSACTION b using(account_id)
+;
 
 -- Select all employees and their branches using LEFT JOIN between EMPLOYEE and BRANCH.
+select *
+from employee
+inner join branch using(branch_id)
+;
 
 -- Select all branches and the accounts they are linked to using LEFT JOIN.
-
+select a.branch_name
+		,a.branch_location
+		,c.account_type
+		,c.balance
+from branch a
+left join customer b using(branch_id)
+left join account c using(customer_id)
+;
 -------------------------------------------------------------
 -- 27. BETWEEN Command
 -- Select all accounts where the balance is between 1000 and 5000.
+select balance from account
+where balance between 1000 and 5000;
 
 -- Select all customers where the loan_amount is between 10,000 and 50,000.
+select a.customer_id
+		,c.loan_amount 
+from customer a
+join account b using(customer_id)
+join loan c using(account_id)
+where c.loan_amount between 10000 and 50000
+;
 
 -- Select all transactions where the transaction_date is between '2022-01-01' and '2022-12-31'.
+select * from transaction
+where transaction_date between '2022-01-01' and '2022-12-31'
+;
 
 -- Select all employees where the salary is between 30,000 and 100,000.
+select * from employee
+where salary between 30000 and 100000
+;
 
 -------------------------------------------------------------
 -- 28. IN and NOT IN Command
 -- Select all customers where the account_type is in ('Savings', 'Checking').
+select a.customer_id
+		,b.account_type
+from customer a
+join account b using(customer_id)
+where account_type in ('savings', 'checking')
+;
 
 -- Select all transactions where the transaction_type is in ('credit', 'debit').
+select * from transaction
+where transaction_type in ('credit', 'debit')
+;
 
 -- Select all branches where the branch_location is not in ('New York', 'Los Angeles').
+select * from branch
+where branch_location not in ('New York', 'Los Angeles')
+;
 
 -- Select all accounts where the balance is in (1000, 2000, 5000).
+select * from account
+where balance in (1000, 2000, 5000)
+;
 
 -------------------------------------------------------------
 -- 29. ARRAY Command
 -- Select all account_type and convert it into an array using ARRAY_AGG().
+select ARRAY_AGG(account_type) from account;
 
 -- Use UNNEST() to expand arrays from the ACCOUNT table.
+SELECT unnest(ARRAY_AGG(account_type)) from account;
 
+select ARRAY_AGG(account_type) from account;
 -- Convert customer names into an array using ARRAY_AGG().
+select ARRAY_AGG(first_name||' '||last_name) from customer;
 
 -- Use ARRAY functions to select and manipulate data from the CARD table.
+
 
 -------------------------------------------------------------
 -- GOOD LUCK WITH YOUR ASSIGNMENT!!!
