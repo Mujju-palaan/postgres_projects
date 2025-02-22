@@ -1,3 +1,6 @@
+--8,
+-- 10)what if balance is already refunded then how to write if else statement to avoid double refund???????
+
 -- -- -- Banking_Application_System
 -- -- --Mujju-pg-Bank-C10-Project
 -- Chapter 10 - Projects
@@ -369,6 +372,7 @@ language plpgsql;
 -- select * from account;
 -- select * from account_history;
 -- select * from card;
+
 -- ------------------------------------------------------------------------------------------------------------
 
 -- 8)Stored Procedure for Loan Payment
@@ -380,18 +384,19 @@ language plpgsql;
 
 create or replace procedure scrop_loan_payment(
 	IN iparam_amount
-	,IN iparam_transaction_type
-	,IN iparam_payment_mode
+	,IN iparam_transaction_type			--('debit', 'credit')
+	,IN iparam_payment_mode				--('ATM', 'cash deposit', 'loan payment', 'fund transfer', 'debit card', 'fees', 'credit card')
 	,IN iparam_account_id
-	,IN iparam_transaction_status
+	,IN iparam_transaction_status		--('processing', 'declined', 'completed')
 	,IN iparam_description
-	,IN iparam_
-	,IN iparam_
-	,IN iparam_
+	
 )
 AS $$
 
-DECLARE last_transaction_id int;
+DECLARE 
+		last_transaction_id int;
+		last_instalment_id int;
+		updated_balance numeric;
 
 BEGIN
 	-- log the payment in the transaction table (select * from transaction)
@@ -401,12 +406,65 @@ BEGIN
 	returning transaction_id into last_transaction_id
 	;
 	
-	-- record the details in the loan payment table
-	-- update the loan instalment records
-	-- adjust the account balance
-	-- document the changes in the account history
+	-- update the loan instalment records (select * from loan_instalments)
+	insert into loan_instalments(loan_id, instalment_amount, due_date, paid_status)
+
+	(select a.loan_id
+			,iparam_amount
+			,b.due_date
+			,case 
+				when a.loan_amount = iparam_amount then 'true'
+				else 'false'
+			end
+	from loan a
+	inner join loan_instalments b using(loan_id)
+	inner join transaction c using(account_id)
+	where transaction_id = last_transaction_id
+	returning instalment_id into last_instalment_id
+	)
+	;
+	
+	
+	-- record the details in the loan payment table (select * from loan_payment)
+	---insert
+	insert into loan_payment(instalment_id, transaction_id)
+	select(last_instalment_id, last_transaction_id)
+	;
+	
+	-- adjust the account balance (select * from account)
+	update account a
+	set balance = (case
+					when transaction_type = 'debit' then (balance - iparam_amount)
+					else (balance + iparam_amount)
+					)
+	from transaction b 
+	where a.account_id = iparam_account_id 
+		AND a.account_id = b.account_id
+	returning balance into updated_balance
+	;
+	
+	-- document the changes in the account history (select * from account_history)
+	insert into account_history(account_id, balance_before, balance_after, transaction_id)
+
+	select iparam_account_id
+			,balance_after
+			,updated_balance
+			,last_transaction_id
+	from account
+	;
+	
 	-- If the payment clears the loan in full, update the loan's end date in the LOAN table.
-	-- To accommodate payments covering multiple months, accept instalment IDs as input and distribute the funds across the specified monthly instalment buckets accordingly.
+	--update if they pay total loan amount (select * from loan)
+	update loan a
+	set laon_end_date = current_date
+	from transaction b
+	where a.account_id=b.account_id
+		AND (a.loan_amount * a.number_of_monthly_instalments) = iparam_amount
+	;
+	
+	-- To accommodate payments covering multiple months, accept instalment IDs as input 
+	--and distribute the funds across the specified monthly instalment buckets accordingly.
+	
 
 END;
 $$
@@ -419,8 +477,98 @@ language plpgsql;
 --insert a record into the fund transfer table, log the transaction in the transaction table, update the account balance, 
 --and record the changes in the account history.
 
+create or replace procedure scrop_fund_transfer(
+	IN iparam_account_id int
+	,IN iparam_amount numeric
+	,IN iparam_transaction_type varchar	--('debit', 'credit')
+	-- ,IN iparam_payment_mode varchar		--('ATM', 'cash deposit', 'loan payment', 'fund transfer', 'debit card', 'fees', 'credit card')
+	,IN iparam_transaction_status varchar	--('processing', 'declined', 'completed')
+	-- ,IN iparam_description varchar
+)
+AS $$
+
+DECLARE 
+		d_transaction_id int;
+		d_balance numeric;
+		d_updated_balance numeric;
+
+BEGIN
+	
+	--log the transaction in the transaction table. (select * from transaction)
+	insert into transaction(transaction_date, amount, transaction_type, payment_mode, account_id, transaction_status, description)
+	values( 
+			current_date
+			,iparam_amount
+			,iparam_transaction_type
+			,'fund transfer'
+			,iparam_account_id
+			,iparam_transaction_status
+			,'fund transfer'
+	)
+	returning transaction_id into d_transaction_id
+	;
 
 
+	--insert a record into the fund transfer table, (select * from fund_transfer)
+	insert into fund_transfer(beneficiary_id, transaction_id, transfer_status)
+	select
+		a.beneficiary_id
+		,d_transaction_id
+		,'completed'
+	from beneficiary a
+	inner join customer b ON a.primary_consumer_id=b.customer_id
+	inner join account c ON b.customer_id=c.customer_id
+	where account_id = iparam_account_id
+	;
+
+	----into balance
+	select balance 
+	into d_balance
+	from account
+	where account_id = iparam_account_id;
+	RAISE NOTICE 'Balance: %', d_balance;
+	
+	--update the account balance (select * from account)
+	update account
+	set balance = (select 
+					CASE
+						when iparam_transaction_type = 'debit' then b.balance - iparam_amount
+						else b.balance + iparam_amount
+					END
+					from transaction a
+					inner join account b using(account_id)
+					where transaction_id = d_transaction_id
+	)
+	where account_id = iparam_account_id
+	returning balance into d_updated_balance
+	;
+	RAISE NOTICE 'Updated Balance: %', d_updated_balance;
+
+	--record the changes in the account history (select * from account_history)
+	insert into account_history(account_id, balance_before, balance_after, transaction_id)
+	select 
+		iparam_account_id
+		,d_balance
+		,d_updated_balance
+		,d_transaction_id
+	;
+	
+	
+END;
+$$
+language plpgsql;
+
+-- CALL public.scrop_fund_transfer(
+-- 	1,				--<IN iparam_account_id integer>,
+-- 	200,			--<IN iparam_amount  numeric>,
+-- 	'credit',		--<IN iparam_transaction_type  character varying>,
+-- 	'completed'		--<IN iparam_transaction_status  character varying>,
+-- )
+
+-- select * from transaction;
+-- select * from fund_transfer;
+-- select * from account;
+-- select * from account_history;
 
 
 -- ------------------------------------------------------------------------------------------------------------
@@ -430,9 +578,88 @@ language plpgsql;
 --update the fund transfer record, log the refund in the transaction table, adjust the account balance, and document 
 --the changes in the account history.
 
+create or replace procedure scrop_reverse_fund_transfer(
+	IN iparam_transaction_id int
+)
 
+AS $$
+DECLARE d_amount numeric;
+		d_balance numeric;
+		d_updated_balance numeric;
 
+BEGIN
+	--update the fund transfer record, (select * from fund_transfer)
+	--what if balance is already refunded then how to write if else statement to avoid double refund???????
+	update fund_transfer a
+	set refund_transaction_id = iparam_transaction_id 
+		,transfer_timestamp = current_timestamp 
+		,transfer_status = 'completed'
+	from transaction b
+	where a.transaction_id=b.transaction_id 
+		AND
+		a.transaction_id = iparam_transaction_id 
+		-- AND 
+		-- b.description NOT LIKE '%Refunded%'
+	;
+	
+	--log the refund in the transaction table,  (select * from transaction)
+	insert into transaction(transaction_date, amount, transaction_type, payment_mode, account_id, transaction_status, description)
+	select 
+			current_date
+			,a.amount
+			,a.transaction_type
+			,a.payment_mode
+			,a.account_id
+			,transaction_status
+			,('Refunded Amount :',a.amount)
+	from transaction a
+	inner join fund_transfer b using(transaction_id)
+	where b.refund_transaction_id = iparam_transaction_id
+	returning amount into d_amount
+	;
 
+	----declare
+	select a.balance
+	into d_balance
+	from account a
+	inner join transaction b using(account_id)
+	inner join fund_transfer c using(transaction_id)
+	where c.refund_transaction_id = iparam_transaction_id
+	;
+	
+	--adjust the account balance,  (select * from account)
+	update account a
+	set balance = a.balance + d_amount
+	from transaction b
+	join fund_transfer c using(transaction_id)
+	where a.account_id=b.account_id AND c.refund_transaction_id=iparam_transaction_id
+	returning a.balance into d_updated_balance
+	;
+	
+	--document the changes in the account history. (select * from account_history)
+	insert into account_history(account_id, balance_before, balance_after, transaction_id)
+	select 
+			account_id
+			,d_balance
+			,d_updated_balance
+			,transaction_id
+	from transaction
+	inner join fund_transfer using(transaction_id)
+	where refund_transaction_id = iparam_transaction_id
+	;
+	
+END;
+$$
+language plpgsql;
+
+--call scrop_reverse_fund_transfer(2);
+
+-- select * from fund_transfer;
+-- select * from transaction;
+-- select * from account;
+-- select * from account_history;
+
+--what if balance is already refunded then how to write if else statement to avoid double refund???????
 
 -- ------------------------------------------------------------------------------------------------------------
 
@@ -441,10 +668,26 @@ language plpgsql;
 --The procedure should return an error if the login ID is not found or the password does not match. Ensure the stored 
 --encrypted password is decrypted during the validation process.
 
+create or replace procedure scrop_customer_login(
+	IN iparam_
+	,IN iparam_
+	,IN iparam_
+	,IN iparam_
+)
+AS $$
 
+DECLARE
 
-
-
+BEGIN
+	--Create a database stored procedure to validate user login
+	--fetch customer details
+	--update the last_login_datetime
+	--The procedure should return an error if the login ID is not found or the password does not match
+	--Ensure the stored encrypted password is decrypted during the validation process.
+	
+END;
+$$
+language plpgsql;
 -- ------------------------------------------------------------------------------------------------------------
 
 -- View Tasks:

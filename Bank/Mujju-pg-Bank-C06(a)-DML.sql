@@ -210,13 +210,13 @@ VALUES
 insert into fund_transfer(beneficiary_id, transaction_id, refund_transaction_id, transfer_status)
 VALUES 
     (1, 1, NULL, 'completed'),
-    (2, 2, 1, 'processing'),
+    (2, 2, 2, 'processing'),
     (3, 3, 2, 'failed'),
     (4, 4, NULL, 'completed'),
-    (5, 5, 3, 'failed'),
+    (5, 5, 5, 'failed'),
     (6, 6, NULL, 'completed'),
-    (7, 7, 4, 'processing'),
-    (8, 8, 5, 'failed'),
+    (7, 7, 7, 'processing'),
+    (8, 8,8, 'failed'),
     (9, 9, NULL, 'completed'),
     (10, 10, NULL, 'processing')
 ;
