@@ -1,4 +1,4 @@
---8,
+--4,8,11
 -- 10)what if balance is already refunded then how to write if else statement to avoid double refund???????
 
 -- -- -- Banking_Application_System
@@ -668,26 +668,67 @@ language plpgsql;
 --The procedure should return an error if the login ID is not found or the password does not match. Ensure the stored 
 --encrypted password is decrypted during the validation process.
 
-create or replace procedure scrop_customer_login(
-	IN iparam_
-	,IN iparam_
-	,IN iparam_
-	,IN iparam_
+-- Enable the pgcrypto extension if not already enabled
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+SELECT pgp_sym_encrypt('my_password', 'my_secret_key'); 			--to encrypt
+SELECT pgp_sym_decrypt(encrypted_password, 'my_secret_key');		--to dencrypt
+
+-------- select * from customer_login;
+--drop FUNCTION validate_user_login();
+
+CREATE OR REPLACE FUNCTION validate_user_login(
+    p_login_id text,
+    p_password text
 )
-AS $$
-
+RETURNS BOOLEAN AS $$
 DECLARE
-
+	d_login_id text;
+    v_encrypted_password text;
+    -- v_decrypted_password TEXT;
+    -- secret_key TEXT = 'my_secret_key'; -- Replace with a secure key
 BEGIN
-	--Create a database stored procedure to validate user login
-	--fetch customer details
-	--update the last_login_datetime
-	--The procedure should return an error if the login ID is not found or the password does not match
-	--Ensure the stored encrypted password is decrypted during the validation process.
+	-- Retrieve the given login ID
+    SELECT login_id INTO d_login_id
+    FROM customer_login
+    WHERE login_id = p_login_id;
 	
+    -- Retrieve encrypted password for the given login ID
+    SELECT password INTO v_encrypted_password
+    FROM customer_login
+    WHERE login_id = p_login_id;
+
+    -- Check if the login ID was found
+    IF d_login_id <> p_login_id THEN
+        RAISE EXCEPTION 'Login ID not found';
+    END IF;
+
+    -- -- Decrypt the stored password
+    -- v_decrypted_password = pgp_sym_decrypt(v_encrypted_password::BYTEA, secret_key);
+
+    -- -- Compare decrypted password with input
+    -- IF v_decrypted_password IS DISTINCT FROM p_password THEN
+    --     RAISE EXCEPTION 'Invalid password';
+    -- END IF;
+
+	-- Compare decrypted password with input
+    IF v_encrypted_password IS DISTINCT FROM p_password THEN
+        RAISE EXCEPTION 'Invalid password';
+    END IF;
+
+	update customer_login
+	set last_login_datetime = current_timestamp
+	WHERE login_id = p_login_id; 
+
+    -- Return TRUE if login is successful
+    RETURN TRUE;
 END;
-$$
-language plpgsql;
+$$ 
+LANGUAGE plpgsql;
+
+-- select * from validate_user_login('user1','password123');
+
+--select * from customer_login;
 -- ------------------------------------------------------------------------------------------------------------
 
 -- View Tasks:
@@ -712,7 +753,7 @@ create view view_customer_info as
 -- Create a database view that displays account details, customer_id, first_name, last_name, account_id, account_type, 
 --and balance. Include the city name and country name using appropriate joins.
 
-create or replace view customer_account_details as
+create or replace view view_customer_account_details as
 	select a.customer_id
 		,a.first_name
 		,a.last_name
@@ -726,7 +767,7 @@ create or replace view customer_account_details as
 	inner join city c using(city_id)
 ;
 
---select * from customer_account_details;
+--select * from view_customer_account_details;
 
 -- ------------------------------------------------------------------------------------------------------------
 
@@ -762,7 +803,7 @@ create or replace view view_loan_details as
 -- Write a database function to calculate the total outstanding loan balance for a customer based on their loans. 
 --Use SQL variables within the function to implement this logic.
 
-drop function fun_loan_balance_per_customer;
+--drop function fun_loan_balance_per_customer;
 
 create or replace function fun_loan_balance_per_customer(iparam_customer_id int)
 returns table(
@@ -802,29 +843,52 @@ language plpgsql;
 -- Write a database function that calculates the monthly interest to be added to the principal amount of a loan each month, 
 --based on the loan_amount, interest_rate, and number_of_monthly_instalments.
 
+--drop function fun_loan_interest;
+
 create or replace function fun_loan_interest()
 returns table(
-	amount
-	,loan_amount
-	,interest_rate
-	,number_of_monthly_instalments	
+	instalment_amount numeric(10,2)
+	,interest_rate numeric(10,2)
+	,number_of_monthly_instalments int
+	,monthly_interest numeric(10,2)
+	,loan_amount numeric(10,2)
 )
+AS $$
 
+BEGIN
+RETURN QUERY
+	select 
+		b.instalment_amount
+		,a.interest_rate
+		,a.number_of_monthly_instalments
+		,(b.instalment_amount * a.interest_rate/100)
+		,(b.instalment_amount * a.number_of_monthly_instalments) + 
+			((b.instalment_amount * a.number_of_monthly_instalments) * a.interest_rate/100) 
+	from loan a
+	inner join loan_instalments b using(loan_id)
+	;
 
+END;
+$$
+language plpgsql;
 
+-- select * from fun_loan_interest();
 -- ------------------------------------------------------------------------------------------------------------
 
 -- 3)Function to display loan details
 -- Write a database function that retrieves customer loan information based on the screen design provided at the bottom of this webpage.
+
+--drop function fun_customer_loan_details;
 
 create or replace function fun_customer_loan_details(iparam_customer_id int)
 returns table(
 	customer_id int
 	,customer_name text
 	,loan_amount numeric
+	,months_to_pay numeric
+	,instalment_amount numeric
+	,total_amount_remaining numeric
 )
-
-
 as $$
 
 BEGIN
@@ -832,10 +896,26 @@ BEGIN
 	--select
 	select a.customer_id
 			,a.first_name||' '||last_name as customer_name
-			,b.loan_amount
+			,CASE
+				when (extract(month from b.loan_end_date) - extract(month from current_date)) <0 then 0
+				else b.loan_amount
+			END
+			,CASE
+				when (extract(month from b.loan_end_date) - extract(month from current_date)) <0 then 0
+				else (extract(month from b.loan_end_date) - extract(month from current_date))
+			END
+			,CASE
+				when (extract(month from b.loan_end_date) - extract(month from current_date)) <0 then 0
+				else c.instalment_amount
+			END
+			,CASE
+				when ((extract(month from b.loan_end_date) - extract(month from current_date)) * c.instalment_amount) <0 then 0
+				else ((extract(month from b.loan_end_date) - extract(month from current_date)) * c.instalment_amount)
+			END
 	from customer a
 	inner join account aa using(customer_id)
 	inner join loan b using(account_id)
+	inner join loan_instalments c using(loan_id)
 	where a.customer_id = iparam_customer_id
 	;
 
@@ -843,7 +923,7 @@ END;
 $$
 language plpgsql;
 
---select * from fun_customer_loan_details(1);
+-- select * from fun_customer_loan_details(2);
 -- ------------------------------------------------------------------------------------------------------------
 -- Trigger Task:
 
@@ -868,14 +948,6 @@ returns trigger
 AS $$
 
 BEGIN
-	-- select employee_id
-	-- into d_employee_id ---variable
-	-- from employee a
-	-- join loan b ON a.employee_id=b.created_employee_id
-	-- join account bb using(account_id)
-	-- join transaction c ON bb.account_id=c.account_id
-	-- where transaction_id = iparam_transaction_id
-	-- ;
 	
 	IF old.amount is distinct from new.amount then
 		INSERT INTO transaction_log(transaction_id, old_amount, new_amount, account_id)
@@ -896,23 +968,58 @@ EXECUTE FUNCTION trg_fun_update_transaction_log();
 
 --update transaction. (select * from transaction_log)
 update transaction
-set amount = 300
+set amount = 500
 where transaction_id = 1;
 
 -- ------------------------------------------------------------------------------------------------------------
 
 -- 2)Insert and Update Triggers on ACCOUNT_HISTORY table -Create a trigger on the ACCOUNT_HISTORY table to ensure 
 --that there is only one record per account_id where the latest_record boolean value is set to TRUE.
-select * from ACCOUNT_HISTORY;
+
+--select * from ACCOUNT_HISTORY;
 
 create table account_history_log(
 	account_id int
 	,history_id int
-	,
-)
+	,balance_before numeric(10,2)
+	,balance_after numeric(10,2)
+	,transaction_id int
+);
+--select * from account_history_log;
+
+---------function----------
+create or replace function trg_fun_insert_account_history_log()
+returns trigger
+
+AS $$
+
+BEGIN
+	IF OLD.balance_before is distinct from NEW.balance_before
+		AND
+	 	OLD.balance_after is distinct from NEW.balance_after
+	then
+		INSERT INTO account_history_log(account_id, balance_before, balance_after, transaction_id )
+		values(OLD.account_id, NEW.balance_before, NEW.balance_after, OLD.transaction_id);
+	END IF;
+	return NEW;
+END;
+$$
+language plpgsql;
 
 
+--trigger
+create trigger trg_insert_account_history
+after insert on account_history
+for each row 
+EXECUTE FUNCTION trg_fun_insert_account_history_log();
 
+--trigger
+create trigger trg_update_account_history
+after update on account_history
+for each row 
+WHEN(OLD.balance_before is distinct from new.balance_before)
+	-- AND (OLD.balance_after is distinct from new.balance_after)
+EXECUTE FUNCTION trg_fun_insert_account_history_log();
 -- ------------------------------------------------------------------------------------------------------------
 
 -- Submission Guidelines:
