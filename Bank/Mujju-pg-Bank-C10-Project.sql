@@ -1,4 +1,4 @@
---4,8,11
+--8,11
 -- 10)what if balance is already refunded then how to write if else statement to avoid double refund???????
 
 -- -- -- Banking_Application_System
@@ -100,44 +100,49 @@ $$;
 --The procedure should also accept the salary increase percentage as an input parameter. Utilize JSON, XML, or SQL 
 --table variables to manage and process multiple employee records. Temporary tables can be used if required. 
 --Input parameters: employee_ids and increase_percent.
-create or replace fun fun_salary_management(
+
+create or replace procedure scrop_salary_management(
 	IN iparam_employee_ids json
-	,IN iparam_increase_percent
+	,IN iparam_increase_percent numeric
 )
-Declare 
-		d_salary numeric;
-		d_updated_salary numeric;
 		
 as $$
 
 BEGIN
+	
+	--procedure should also accept the salary increase percentage as an input parameter
 	---temp tbl
 	create temp table temp_salary_management(
 		employee_id int
-		,salary numeric
 	);
-	
+
 	---ids
-	SELECT CAST(value AS INTEGER) AS emp_id FROM jsonb_array_elements_text(iparam_employee_ids::jsonb);
+	-- SELECT CAST(value AS INTEGER) AS emp_id FROM jsonb_array_elements_text('[1, 2, 3]'::jsonb);
+	-- SELECT json_array_elements('[1, 2, 3]'::JSON);
 
-	--select
-	select salary
-	into d_salary
-	from employee
-	where employee_id = iparam_employee_ids;
-
-	--calculate
-	d_salary * iparam_increase_percent = d_updated_salary
-	
 	--insert
-	insert into temp_salary_management(employee_id, salary)
-	values(iparam_employee_ids, d_updated_salary)
+	insert into temp_salary_management(employee_id)
+	-- SELECT CAST(value AS INTEGER) AS emp_id FROM jsonb_array_elements_text('[1, 2, 3]'::jsonb)
+	SELECT CAST(value AS INTEGER) AS emp_id FROM jsonb_array_elements_text(iparam_employee_ids::jsonb)
+	;
 
+	----update employee salaries for multiple employee IDs provided as input.	(select * from employee)
+	update employee a
+	set salary = (a.salary * iparam_increase_percent/100)
+	from temp_salary_management b
+	where a.employee_id = b.employee_id
+	;
+	
 END;
 $$
 language plpgsql;
 
+-- call scrop_salary_management('[1,2,3]',13);
 
+-- select * from temp_salary_management;
+-- drop table temp_salary_management;
+
+-- select * from employee;
 -- ------------------------------------------------------------------------------------------------------------
 
 -- 5)Stored Procedure for Customer Data Grid
@@ -325,7 +330,8 @@ BEGIN
 					inner join transaction b using(account_id)
 					where b.transaction_id = last_transaction_id)
 	from transaction b
-	where a.account_id=b.account_id AND a.account_id = iparam_account_id 
+	where a.account_id=b.account_id 
+		AND a.account_id = iparam_account_id 
 	;
 
 
@@ -383,12 +389,12 @@ language plpgsql;
 --distribute the funds across the specified monthly instalment buckets accordingly.
 
 create or replace procedure scrop_loan_payment(
-	IN iparam_amount
-	,IN iparam_transaction_type			--('debit', 'credit')
-	,IN iparam_payment_mode				--('ATM', 'cash deposit', 'loan payment', 'fund transfer', 'debit card', 'fees', 'credit card')
-	,IN iparam_account_id
-	,IN iparam_transaction_status		--('processing', 'declined', 'completed')
-	,IN iparam_description
+	IN iparam_amount numeric
+	,IN iparam_transaction_type	 varchar		--('debit', 'credit')
+	,IN iparam_payment_mode	varchar			--('ATM', 'cash deposit', 'loan payment', 'fund transfer', 'debit card', 'fees', 'credit card')
+	,IN iparam_account_id int
+	,IN iparam_transaction_status varchar		--('processing', 'declined', 'completed')
+	,IN iparam_description varchar
 	
 )
 AS $$
@@ -396,7 +402,10 @@ AS $$
 DECLARE 
 		last_transaction_id int;
 		last_instalment_id int;
-		updated_balance numeric;
+		d_balance numeric;
+		d_updated_balance numeric;
+		d_loan_amount numeric;
+		number_of_monthly_instalments int;
 
 BEGIN
 	-- log the payment in the transaction table (select * from transaction)
@@ -413,15 +422,15 @@ BEGIN
 			,iparam_amount
 			,b.due_date
 			,case 
-				when a.loan_amount = iparam_amount then 'true'
+				when b.instalment_amount = iparam_amount then 'true'
 				else 'false'
 			end
 	from loan a
 	inner join loan_instalments b using(loan_id)
 	inner join transaction c using(account_id)
 	where transaction_id = last_transaction_id
-	returning instalment_id into last_instalment_id
 	)
+	returning instalment_id into last_instalment_id
 	;
 	
 	
@@ -430,33 +439,53 @@ BEGIN
 	insert into loan_payment(instalment_id, transaction_id)
 	select(last_instalment_id, last_transaction_id)
 	;
+
+	----balance
+	select balance
+	into d_balance
+	from account
+	where account_id = iparam_account_id;
 	
 	-- adjust the account balance (select * from account)
 	update account a
-	set balance = (case
-					when transaction_type = 'debit' then (balance - iparam_amount)
-					else (balance + iparam_amount)
-					)
+	set balance = case
+					when transaction_type = 'debit' then (a.balance - iparam_amount)
+					else (a.balance + iparam_amount)
+					
 	from transaction b 
 	where a.account_id = iparam_account_id 
 		AND a.account_id = b.account_id
-	returning balance into updated_balance
+	returning balance into d_updated_balance
 	;
 	
 	-- document the changes in the account history (select * from account_history)
 	insert into account_history(account_id, balance_before, balance_after, transaction_id)
 
 	select iparam_account_id
-			,balance_after
+			,d_balance
 			,updated_balance
 			,last_transaction_id
 	from account
 	;
 	
+	---declare d_loan_amount, d_number_of_monthly_instalments
+	select loan_amount, number_of_monthly_instalments
+	into d_loan_amount, d_number_of_monthly_instalments
+	from loan
+	where account_id = iparam_account_id; 
+	;
+	
+	-- Check if the payment clears the loan in full,
+    IF iparam_amount <= (d_loan_amount * d_number_of_monthly_instalments) 
+	THEN
+        RAISE EXCEPTION 'Total instalments not paid';
+    END IF;
+	
 	-- If the payment clears the loan in full, update the loan's end date in the LOAN table.
 	--update if they pay total loan amount (select * from loan)
 	update loan a
 	set laon_end_date = current_date
+	-- ,loan_amount = 0
 	from transaction b
 	where a.account_id=b.account_id
 		AND (a.loan_amount * a.number_of_monthly_instalments) = iparam_amount
