@@ -99,10 +99,10 @@ BEGIN
 	from loan
 	where account_id = iparam_account_id
 	; 
+
 	
 	-- If the payment clears the loan in full, update the loan's end date in the LOAN table.
 	--update if they pay total loan amount (select * from loan)
-	
 	-- Check if the payment clears the loan in full,
     IF iparam_amount <= (d_loan_amount * d_number_of_monthly_instalments) THEN
         RAISE EXCEPTION 'Total instalments not paid';
@@ -114,6 +114,7 @@ BEGIN
 		;
 		RAISE NOTICE 'Loan fully paid and end date updated';
     END IF;
+
 	
 	-- To accommodate payments covering multiple months, accept instalment IDs as input 
 	--and distribute the funds across the specified monthly instalment buckets accordingly.
@@ -124,14 +125,14 @@ $$
 language plpgsql;
 
 
--- CALL public.scrop_loan_payment(
--- 	800					--<IN iparam_amount numeric>,
--- 	,'debit'			-- <IN iparam_transaction_type  character varying>,
--- 	,'loan payment'		-- <IN iparam_payment_mode  character varying>,
--- 	,3					-- <IN iparam_account_id  integer>,
--- 	,'completed'		-- <IN iparam_transaction_status  character varying>,
--- 	,'loan payment'		-- <IN iparam_description  character varying>
--- )
+CALL public.scrop_loan_payment(
+	100					--<IN iparam_amount numeric>,
+	,'debit'			-- <IN iparam_transaction_type  character varying>,
+	,'loan payment'		-- <IN iparam_payment_mode  character varying>,
+	,3					-- <IN iparam_account_id  integer>,
+	,'completed'		-- <IN iparam_transaction_status  character varying>,
+	,'loan payment'		-- <IN iparam_description  character varying>
+)
 
 -- select * from transaction;
 -- select * from loan_instalments;
