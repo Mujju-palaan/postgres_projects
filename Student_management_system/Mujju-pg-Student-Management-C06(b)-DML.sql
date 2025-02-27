@@ -1,7 +1,6 @@
---Mujju-pg-Student-Management-C06(b)-DML
+Mujju-pg-Student-Management-C06-DML
 -- Question 1: Insert Data into all Tables
 -- Write SQL queries to populate each table created in the Chapter 5 assignment with at least 10 rows of data.
---DONE
 
 -- Question 2: Insert Data into the STUDENT Table
 -- Write a single SQL query to insert multiple student records into the STUDENT table.

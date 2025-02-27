@@ -24,7 +24,7 @@ create table SEMESTER(
 	,semester_name varchar(255) not null
 	,start_date date not null
 	,end_date date not null
-	,enrollment_status char check(enrollment_status in ('open', 'close')) not null
+	,enrollment_status char(5) check(enrollment_status in ('open', 'close')) not null
 	,created_date date default current_date
 );
 
@@ -280,7 +280,7 @@ select * from ENROLLMENT;
 -- Question 29: Drop the EMPLOYEE_LOGIN Table
 -- Write a SQL statement to drop the EMPLOYEE_LOGIN table.
 
-drop table EMPLOYEE_LOGIN;
+-- drop table EMPLOYEE_LOGIN;
 
 -- Question 30: Add a UNIQUE Constraint on the EXAM Table
 -- Write a SQL statement to add a UNIQUE constraint to the EXAM table ensuring that the exam_name is not repeated.
