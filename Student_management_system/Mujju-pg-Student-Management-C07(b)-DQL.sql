@@ -173,8 +173,30 @@ where extract(year from exam_date) = (extract(year from current_date) - 1)
 -- Overall attendance rate.
 
 -- SQL Queries:
--- Retrieve the number of students marked 'Present' and 'Absent' per course (use the ATTENDANCE table).
+-- Retrieve the number of students marked 'Present' and 'Absent' per course (use the ATTENDANCE table). (select * from ATTENDANCE)
+select 
+	b.course_name
+	,case
+		when a.absence_flag = 'true' then count(a.absence_flag)
+		end as Present
+	,case
+		when a.absence_flag = 'false' then count(a.absence_flag)
+		end as Absent
+from ATTENDANCE a
+inner join course b using(course_id)
+group by b.course_name,  a.absence_flag
+;
+
 -- List students with more than 5 absences in any course.
+select 
+	first_name||' '||last_name as student_name
+	,count(absence_flag) as student_count
+from ATTENDANCE a
+inner join student b using(student_id)
+group by first_name||' '||last_name
+having count(absence_flag) > 5
+;
+
 -- Calculate the overall attendance rate by dividing total presents by the total attendance records.
 
 
@@ -187,9 +209,21 @@ where extract(year from exam_date) = (extract(year from current_date) - 1)
 
 -- SQL Queries:
 -- Retrieve recent actions from the AUDIT_LOG table.
--- Retrieve actions performed by teachers by joining AUDIT_LOG with TEACHER.
--- Count the number of audit logs per day.
+select * from AUDIT_LOG
+where log_date = current_date
+;
 
+-- Retrieve actions performed by teachers by joining AUDIT_LOG with TEACHER.
+
+
+-- Count the number of audit logs per day.
+select
+	log_date
+	,count(*)
+from AUDIT_LOG
+group by log_date
+order by log_date
+;
 -- -----------------------------------------------------------------------------------------------------
 
 -- Key Visuals and Corresponding SQL Queries:
@@ -262,10 +296,23 @@ inner join enrollment aa ON a.course_id = aa.course_id
 inner join student d ON aa.student_id = d.student_id
 group by a.Course_name ,b.Exam_name, c.grade_letter
 ;
+
 -- -----------------------------------------------------------------------------------------------------
 -- Gauge - Fees Status
 -- SQL Query: Retrieve total fees, paid amount and due amount for current semester.
 -- Display: Total paid fees and due amount.
+
+select 
+	aa.first_name||' '||aa.last_name as student_name
+	,b.fee_amount
+	,a.amount_paid
+	,a.balance_amount
+from fee_payment a
+inner join student aa using(student_id)
+inner join enrollment bb using(student_id)
+inner join course cc using(course_id)
+inner join fee_structure b using(course_id)
+;
 
 
 
