@@ -5,8 +5,13 @@
 
 -- 1. SELECT Command
 -- Select all columns from the STUDENT table.
+select * from student;
+
 -- Select the first_name and last_name of all students.
+select first_name, last_name from student;
+
 -- Select all students' email and date_of_birth.
+
 -- Select the course_name and credits of all courses.
 
 

@@ -277,28 +277,29 @@ values
 -- select * from CLASS_SCHEDULE;
 
 -- Question 11: Insert values in the EXAM Table
-insert into EXAM(exam_name)
+insert into EXAM(exam_name, course_id, total_marks)
 values
-	('Midterm Exam'),
-    ('Final Exam'),
-    ('Quiz 1'),
-    ('Quiz 2'),
-    ('Quiz 3'),
-    ('Quiz 4'),
-    ('Practical Exam 1'),
-    ('Practical Exam 2'),
-    ('Lab Test 1'),
-    ('Lab Test 2'),
-    ('Oral Exam 1'),
-    ('Oral Exam 2'),
-    ('Mock Test 1'),
-    ('Mock Test 2'),
-    ('Surprise Test 1'),
-    ('Surprise Test 2'),
-    ('Unit Test 1'),
-    ('Unit Test 2'),
-    ('Semester Project Presentation'),
-    ('Comprehensive Assessment');
+	('Midterm Exam', 1, 30),
+    ('Final Exam', 1, 100),
+    ('Quiz 1', 1, 20),
+    ('Quiz 2', 1, 20),
+    ('Quiz 3', 1, 20),
+    ('Quiz 4', 1, 20),
+    ('Practical Exam 1', 1, 30),
+    ('Practical Exam 2', 1, 30),
+    ('Lab Test 1', 1, 20),
+    ('Lab Test 2', 1, 20),
+    ('Oral Exam 1', 1, 20),
+    ('Oral Exam 2', 1, 20),
+    ('Mock Test 1', 1, 30),
+    ('Mock Test 2', 1, 30),
+    ('Surprise Test 1', 1, 30),
+    ('Surprise Test 2', 1, 30),
+    ('Unit Test 1', 1, 50),
+    ('Unit Test 2', 1, 50),
+    ('Semester Project Presentation', 1, 70),
+    ('Comprehensive Assessment', 1, 30)
+;
 
 -- select * from EXAM;
 

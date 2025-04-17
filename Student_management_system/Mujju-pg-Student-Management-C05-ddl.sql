@@ -119,7 +119,10 @@ create table CLASS_SCHEDULE(
 create table exam (
 	exam_id int GENERATED ALWAYS AS IDENTITY PRIMARY KEY
 	,exam_name varchar(255) not null
+	,course_id int
+	,total_marks int not null
 	,created_date date default current_date not null
+	,foreign key(course_id) references course(course_id)
 );
 
 
@@ -242,7 +245,8 @@ drop index idx_phone_number;
 
 -- Question 23: Rename the FEE_PAYMENT Table
 -- Write a SQL statement to rename the FEE_PAYMENT table to PAYMENT_TRANSACTION.
-alter table FEE_PAYMENT rename to PAYMENT_TRANSACTION;
+
+--alter table FEE_PAYMENT rename to PAYMENT_TRANSACTION;
 
 -- Question 24: Add Primary Key
 -- Write a SQL statement to add primary key to the EMPLOYEE_LOGIN table.
