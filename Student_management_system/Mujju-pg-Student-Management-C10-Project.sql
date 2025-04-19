@@ -7,37 +7,34 @@
 
 -- Write a stored procedure to insert data into SEMESTER table.
 
-
+--DONE
 -- -----------------------------------------------------------------------------------------------------
 -- Stored Procedure for Teacher Management
 
--- Write a stored procedure to update data in TEACHER table.
-
-
+-- Write a stored procedure to update data in TEACHER table
+--DONE
 -- -----------------------------------------------------------------------------------------------------
 -- Stored Procedure for Course Management
 
 -- Write a stored procedure to select data from COURSE table.
-
+--DONE
 
 -- -----------------------------------------------------------------------------------------------------
 -- Stored Procedure for Class Schedule Grid
 
 -- Develop a stored procedure that takes a class ID, teacher ID, room ID, start date, end date, start time, and end time as input parameters. The procedure should insert the provided details into the class schedule table while ensuring that no two classes are scheduled at overlapping times. Furthermore, it must enforce a rule that a room assigned to a specific department can only host classes for courses belonging to the same department..
 
-
+--DONE
 -- -----------------------------------------------------------------------------------------------------
 -- Stored Procedure for Exam Schedule
 
 -- Create a stored procedure that accepts an exam ID, exam date, maximum marks, room ID, and course ID as input parameters. The procedure should insert the provided details into the exam schedule table, ensuring that no two exams are scheduled at the same date and time. Additionally, it must enforce a rule that no two exams for different courses can occur on the same day.
-
-
+--DONE
 -- -----------------------------------------------------------------------------------------------------
 -- Stored Procedure for Exam Result
 
 -- Create a stored procedure to insert data into the EXAM_RESULT and EXAM_RESULT_MASTER tables. Additionally, the procedure should update the grade in the ENROLLMENT table..
-
-
+--DONE
 -- -----------------------------------------------------------------------------------------------------
 -- Stored Procedure for Fee Payment
 
@@ -50,10 +47,18 @@
 -- Write a stored procedure to insert data into attendance table, make sure not to enter absence records for holidays defined in date dim table.
 
 
+
+
+
+
 -- -----------------------------------------------------------------------------------------------------
 -- Stored Procedure for Analyse exam Results
 
 -- Create a stored procedure to analyze exam results. The procedure should include data points such as exam name, course name, exam date, maximum marks, average marks across all students, the number of students who appeared, the count of students who passed, and the count of students who failed. The data should be retrieved for a specific semester ID provided as an input parameter.
+
+
+
+
 
 
 -- -----------------------------------------------------------------------------------------------------
@@ -64,10 +69,19 @@
 -- Create a view that shows payment transaction details from FEE_PAYMENT table.
 
 
+
+
+
+
 -- -----------------------------------------------------------------------------------------------------
 -- View for Student Management Screen
 
 -- Create a view that shows student details, including student names, age, semester name, courses enrolled, total fees and due amount.
+
+
+
+
+
 
 
 
@@ -78,6 +92,11 @@
 
 
 
+
+
+
+
+
 -- -----------------------------------------------------------------------------------------------------
 -- View for Student Enrollment
 
@@ -85,10 +104,18 @@
 
 
 
+
+
+
+
 -- -----------------------------------------------------------------------------------------------------
 -- View for Fee Management Screen
 
 -- Create a view that shows student details, including student names, semester name, total fees, paid amount and due amount.
+
+
+
+
 
 
 
@@ -102,10 +129,17 @@
 
 
 
+
+
+
 -- -----------------------------------------------------------------------------------------------------
 -- Function to Calculate Exam Pass Rate
 
 -- Write a function that calculates the percentage of students who passed a specific exam (grade of 'C' or higher). You need to consider all students from current semester.
+
+
+
+
 
 
 
