@@ -98,27 +98,17 @@
 -- Function to Calculate Total Fees per Student
 
 -- Write a function that calculates the total fees a student owes based on the courses they are enrolled for the current semester.
-
-
-
-
-
-
+---done
 -- -----------------------------------------------------------------------------------------------------
 -- Function to Calculate Exam Pass Rate
 
 -- Write a function that calculates the percentage of students who passed a specific exam (grade of 'C' or higher). You need to consider all students from current semester.
-
-
-
-
-
-
-
-
+---done
 -- -----------------------------------------------------------------------------------------------------
-
 
 -- Trigger Task:
 -- Trigger for Enrollment Grade Changes
--- Create a trigger on the ENROLLMENT table that logs any changes made to the grade field into the AUDIT_LOG table. Each change should include the date, the action performed, old grade, new grade, and the teacher_id who made the change.
+-- Create a trigger on the ENROLLMENT table that logs any changes made to the grade field into the AUDIT_LOG table. 
+--Each change should include the date, the action performed, old grade, new grade, and the teacher_id who made the change.
+
+---done

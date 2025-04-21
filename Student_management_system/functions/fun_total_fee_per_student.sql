@@ -28,6 +28,7 @@ BEGIN
 	into d_total_fees
 	from fee_structure a
 	join enrollment b using(course_id) 
+	where b.semester_id = iparam_semester_id
 	group by b.student_id, b.semester_id, b.course_id
 	;
 		
@@ -48,7 +49,7 @@ BEGIN
 END;
 $$ language plpgsql;
 
-select * from fun_total_fee_per_student(12);
+-- select * from fun_total_fee_per_student(18);
 
-select * from enrollment
-select * from fee_structure
+-- select * from enrollment
+-- select * from fee_structure
