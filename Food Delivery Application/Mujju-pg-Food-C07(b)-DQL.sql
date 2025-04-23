@@ -1,5 +1,5 @@
-Chapter 7 - DQL (Data Query Language)
-DQL Assignment 4 - MS SQL Logic for Dashboard Reporting in a Food Delivery System
+-- Chapter 7 - DQL (Data Query Language)
+-- DQL Assignment 4 - MS SQL Logic for Dashboard Reporting in a Food Delivery System
 
 
 Assignment Tasks:
