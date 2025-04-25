@@ -37,47 +37,42 @@
 
 
 -- Stored Procedure for Collection Analysis
-
--- Create a stored procedure for Collection Analysis to retrieve data for the collections data grid, including Date, Weekday Name, Order Count, Customer Count, Total Amount, Discount Amount, and Discount Percent.
+-- Create a stored procedure for Collection Analysis to retrieve data for the collections data grid, 
+--including Date, Weekday Name, Order Count, Customer Count, Total Amount, Discount Amount, and Discount Percent.
+---DONE
 
 
 
 -- View Tasks:
 -- View for Customer Informationw
-
 -- Create a view to display customer information from customer table.
-
+---DONE
 
 
 -- View for Order Overview
-
 -- Design a view to retrieve order details, including Order ID, Order Date, Customer Name, Amount, Order Status, Delivery Status, and Delivery Agent's Phone Number.
-
+---DONE
 
 
 -- View for Delivery Details
-
 -- Create a view to fetch delivery information, including Delivery Date, Order ID, Delivery Agent, Order Duration, Delivery Duration, and Delivery Status.
-
+---DONE
 
 
 -- View for Coupon Analysis
-
 -- Create a view to retrieve coupon analysis, including Coupon Name, Calendar Date, Redeem Count, and Redeem Amount. Display Redeem Amount as zero for calendar dates with no redeems. Use a JOIN with the date dimension table.
-
+---DONE
 
 
 -- Function Tasks:
 -- Function to Calculate Total Orders by Customer
-
 -- Write a function to calculate the total number of orders placed by a specific customer.
-
-
+---DONE
 
 
 -- Function to Calculate Total Payments Received for a Restaurant
-
 -- Write a function that returns the total payments received by a restaurant based on all orders.
+---DONE
 
 
 
@@ -85,3 +80,4 @@
 
 -- Trigger on Order Status Change
 -- Create a trigger on the ORDER table that logs any changes to the status field into the AUDIT_LOG table. Capture the order_id, old_status, new_status, and log_date.
+---DONE
