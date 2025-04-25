@@ -63,12 +63,13 @@ CREATE TABLE "ORDER" (
     order_date TIMESTAMP DEFAULT current_TIMESTAMP NOT NULL,
     total_price DECIMAL(10,2) NOT NULL,
     status VARCHAR(50) check (status in ('Pending','Delivered','Cancelled')) NOT NULL,
-    customer_id INT NOT NULL,
-	coupon_id int not null,
+    customer_id INT,
+	coupon_id int ,
     FOREIGN KEY (customer_id) REFERENCES CUSTOMER(customer_id),
 	FOREIGN KEY (coupon_id) REFERENCES coupon(coupon_id)
 );
-
+-- insert into  "ORDER"(order_date, total_price, status, customer_id, coupon_id)
+-- values(current_date, 5, 'Pending', 1, NULL);
 
 -- Question 6: Define the ORDER_ITEM Table
 -- Write the SQL statement to create a many-to-many relationship between orders and menu items. This will require the ORDER_ITEM table, which includes:

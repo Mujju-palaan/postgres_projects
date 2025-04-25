@@ -613,9 +613,62 @@ values
 (4, 'Overall good food and quick service.', 1, 2)
 ;
 
-
 -- select * from REVIEW;
 
+---dummy data with created_at column
+INSERT INTO review (rating, review_text, customer_id, restaurant_id, created_at)
+VALUES
+(5, 'Fantastic food and quick delivery!', 1, 2, '2025-05-03'),
+(4, 'Great experience overall.', 2, 3, '2025-05-15'),
+(3, 'Satisfactory meal.', 3, 4, '2025-06-01'),
+(2, 'Could be better.', 4, 1, '2025-06-18'),
+(1, 'Not happy with the order.', 5, 5, '2025-06-28'),
+(5, 'Best meal I had in weeks!', 6, 2, '2025-07-05'),
+(4, 'Fresh and tasty.', 7, 3, '2025-07-12'),
+(3, 'Just okay.', 8, 1, '2025-07-25'),
+(2, 'Packaging was messy.', 9, 4, '2025-08-04'),
+(1, 'Food arrived cold.', 10, 5, '2025-08-20'),
+(5, 'Loved everything!', 1, 1, '2025-08-30'),
+(4, 'Consistently good service.', 2, 2, '2025-09-07'),
+(3, 'A bit pricey.', 3, 3, '2025-09-17'),
+(2, 'Late delivery.', 4, 4, '2025-09-29'),
+(1, 'Very bad experience.', 5, 5, '2025-10-02'),
+(5, 'Highly recommended!', 6, 2, '2025-10-14'),
+(4, 'Enjoyed the flavors.', 7, 3, '2025-10-25'),
+(3, 'Average quality.', 8, 4, '2025-11-01'),
+(2, 'Didn’t match the description.', 9, 1, '2025-11-10'),
+(1, 'Never ordering again.', 10, 5, '2025-11-23'),
+(5, 'Exceptional taste!', 1, 2, '2025-12-05'),
+(4, 'Nicely presented.', 2, 3, '2025-12-10'),
+(3, 'Reasonable delivery time.', 3, 1, '2025-12-17'),
+(2, 'Missing item in the order.', 4, 4, '2025-12-24'),
+(1, 'Worst service I’ve had.', 5, 5, '2025-12-30'),
+(5, 'Incredible food and friendly staff!', 3, 1, '2025-01-08'),
+(4, 'Loved the presentation and taste.', 7, 2, '2025-02-14'),
+(3, 'Average meal, but decent value.', 5, 3, '2025-03-03'),
+(2, 'The dessert was too sweet.', 8, 4, '2025-03-21'),
+(1, 'Very poor service and cold food.', 6, 5, '2025-04-09'),
+(5, 'Fast delivery and fresh food!', 2, 3, '2025-05-11'),
+(4, 'Meals were nicely packed.', 9, 1, '2025-05-27'),
+(3, 'Okay experience, nothing special.', 4, 2, '2025-06-06'),
+(2, 'Food lacked seasoning.', 10, 4, '2025-06-18'),
+(1, 'Waited too long for the order.', 1, 5, '2025-07-02'),
+(5, 'Great variety on the menu!', 2, 1, '2025-07-20'),
+(4, 'Will definitely order again.', 3, 2, '2025-08-04'),
+(3, 'Slightly overcooked but edible.', 6, 3, '2025-08-29'),
+(2, 'Delivery person was rude.', 7, 5, '2025-09-10'),
+(1, 'Order was wrong and incomplete.', 5, 4, '2025-09-25'),
+(5, 'Everything was perfect!', 9, 2, '2025-10-01'),
+(4, 'Sauces were delicious.', 10, 3, '2025-10-18'),
+(3, 'Mediocre service.', 1, 1, '2025-11-05'),
+(2, 'Did not match what I ordered.', 4, 4, '2025-11-15'),
+(1, 'Too expensive for the quality.', 8, 5, '2025-11-30'),
+(5, 'Impressive packaging and portions.', 2, 1, '2025-12-02'),
+(4, 'Good taste, fair price.', 7, 2, '2025-12-12'),
+(3, 'Mildly spicy as requested.', 6, 3, '2025-12-19'),
+(2, 'Rice was undercooked.', 3, 4, '2025-12-26'),
+(1, 'Regret ordering from here.', 5, 5, '2025-12-31')
+;
 -------------------------------------------------------------------------------------
 
 insert into audit_log(log_date, action, user_id)
