@@ -160,6 +160,8 @@ create table INVOICE(
 -- payment_date as a timestamp, not null.
 -- contract_invoice_id as the foreign key to INVOICE table, not null.
 -- Add a CHECK constraint to ensure the amount is greater than 0.
+-- drop table RECEIVABLE_TRANSACTION;
+
 create table RECEIVABLE_TRANSACTION(
 	receivable_transaction_id int generated always as identity primary key
 	,description  varchar(255) not null
