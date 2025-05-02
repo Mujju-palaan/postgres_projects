@@ -5,14 +5,24 @@
 -- author: 'F. Scott Fitzgerald'
 -- publication_year: 1925
 -- isbn: '9781234567890'
+-- select * from book;
 
+insert into book(title, publication_year, publisher_id, isbn, book_category_id)
+values('The Great Gatsby', 1925, 1, '9781234567890', 5)
+;
 
 -- Question 3: Insert Multiple Members using single SQL statement.
 -- Insert two new members into the MEMBER table with the following details:
 
 -- First member: first_name: 'John', last_name: 'Doe', email: 'john.doe@example.com', phone_number: '1234567890'
 -- Second member: first_name: 'Jane', last_name: 'Smith', email: 'jane.smith@example.com', phone_number: '0987654321'
+-- select * from MEMBERs;
 
+insert into members(first_name, last_name, email, phone_number, gender, membership_expiry_date)
+values
+('John','Doee', 'john.doe@example.com', '78678678666', 'M', '2027-11-11'),
+('Jane','Smith','jane.smith@example.com','0987654321', 'F', '2027-11-11')
+;
 
 -- Question 4: Insert a Loan Record
 -- Write a DML SQL statement to insert a new loan into the LOAN table:
@@ -21,6 +31,9 @@
 -- due_date: 30 days from the current date
 -- book_id: 1
 -- member_id: 2
+-- select * from loan;
+insert into loan(loan_date, due_date, return_date, book_id, member_id, issue_branch_id, return_branch_id, employee_id)
+values(current_date, (current_date + interval '1 month'), null, 1, 1, 1, 1, 2);
 
 
 -- Question 5: Insert a Record into the MEMBER Table with Default Values
@@ -70,7 +83,11 @@
 
 -- Question 12: Select Into Backup Table
 -- Write a SQL statement to create a backup of all rows in the BOOK table into a new table called BOOK_BACKUP.
+create table BOOK_BACKUP AS
+select * from book
+;
 
+select * from BOOK_BACKUP;
 
 -- Question 13: Insert Data Using Subquery
 -- Write a SQL statement to insert a new loan into the LOAN table. Use a subquery to get the book_id for the book titled 'The Great Gatsby' and member_id for the member whose last_name is 'Smith'.

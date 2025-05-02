@@ -173,9 +173,10 @@ create table IF NOT EXISTS MEMBERS(
 -- created_at as a datetime field, default it to system timestamp, not null.
 -- Add a CHECK constraint to ensure the subscription_type is in ("Free", "Standard:, "Standard").
 -- drop table MEMBERSHIP_TYPE
+-- drop table MEMBERSHIP_TYPE
 create table IF NOT EXISTS MEMBERSHIP_TYPE(
 	membership_type_id  int generated always as identity primary key
-	,membership_type varchar check(membership_type in ('Free','Standard','Standard'))
+	,membership_type varchar check(membership_type in ('Free','Standard','Premium'))
 	,active_flag boolean default 'true' not null
 	,validity_days int not null
 	,created_at  date default current_date not null
@@ -222,10 +223,11 @@ create table IF NOT EXISTS LOAN(
 	,book_id int not null
 	,member_id int not null
 	,issue_branch_id int not null
-	,return_branch_id int not null
+	,return_branch_id int 
 	,foreign key(book_id) references book(book_id)
 	,foreign key(member_id) references members(member_id)
 	,foreign key(issue_branch_id) references LIBRARY_BRANCH(branch_id)
+	,foreign key(return_branch_id) references LIBRARY_BRANCH(branch_id)
 	,created_at  date default current_date not null
 );
 
