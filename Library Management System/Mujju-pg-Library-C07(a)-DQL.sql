@@ -614,6 +614,8 @@ where branch_id in (1, 2, 5)
 
 -- 29. ARRAY Command
 -- Select all category_name and convert it into an array using COLLECT().
+SELECT array_agg(category_name) AS category_array
+FROM book_CATEGORY;
 
 -- Use UNNEST() to expand arrays from the CATEGORY table.
 
