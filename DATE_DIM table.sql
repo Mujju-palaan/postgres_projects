@@ -15,9 +15,8 @@ CREATE TABLE DATE_DIM (
     year_end_date_flag BOOLEAN NOT NULL,
     holiday_flag BOOLEAN NOT NULL DEFAULT FALSE
 );
-
  WITH RECURSIVE DateSeries AS (
-    SELECT CURRENT_DATE AS calendar_date 
+    SELECT current_date AS calendar_date 
     UNION ALL
     SELECT  (calendar_date + INTERVAL '1 day')::DATE
     FROM Dateseries
